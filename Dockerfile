@@ -27,11 +27,13 @@ RUN composer install --no-interaction --optimize-autoloader --no-dev
 # 6. Dar permisos a Laravel para escribir en storage
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 7. Crear la base de datos SQLite si no existe, migrar y arrancar
+# 7. Script de inicio para migrar y arrancar
 RUN echo '#!/bin/bash\n\
 if [ ! -f /var/www/html/database/database.sqlite ]; then\n\
     touch /var/www/html/database/database.sqlite\n\
+    chmod 777 /var/www/html/database/database.sqlite\n\
 fi\n\
+php artisan optimize:clear\n\
 php artisan migrate --force\n\
 php artisan db:seed --force\n\
 apache2-foreground' > /usr/local/bin/start.sh
