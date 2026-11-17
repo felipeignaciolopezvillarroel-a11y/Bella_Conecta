@@ -1,6 +1,15 @@
+# ETAPA 1: Compilar los estilos y JS con Node
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# ETAPA 2: Configurar PHP y Apache
 FROM php:8.3-apache
 
-# 1. Instalar extensiones necesarias de PHP (SQLite, Zip, etc.)
+# Instalar extensiones de PHP (SQLite, Zip)
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     libsqlite3-dev \
@@ -8,30 +17,29 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && docker-php-ext-install zip pdo pdo_sqlite
 
-# 2. Habilitar mod_rewrite de Apache
+# Habilitar mod_rewrite
 RUN a2enmod rewrite
 
-# 3. Apuntar Apache a la carpeta /public de Laravel
+# Apuntar Apache a /public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 4. Copiar tu proyecto al servidor
+# Copiar el proyecto
 WORKDIR /var/www/html
 COPY . .
 
-# 5. Instalar Composer
+# Copiar los assets YA COMPILADOS desde la ETAPA 1
+COPY --from=frontend /app/public/build ./public/build
+
+# Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# 5.5 Instalar Node.js y compilar CSS/JS (Vite)
-RUN apt-get update && apt-get install -y nodejs npm
-RUN npm install && npm run build
-
-# 6. Dar permisos absolutos a las carpetas que Laravel necesita escribir
+# Dar permisos
 RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
-# 7. Script de inicio para migrar y arrancar
+# Script de inicio
 RUN echo '#!/bin/bash\n\
 if [ ! -f /var/www/html/database/database.sqlite ]; then\n\
     touch /var/www/html/database/database.sqlite\n\
