@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && docker-php-ext-install zip pdo pdo_sqlite
 
-# 2. Habilitar mod_rewrite de Apache (necesario para Laravel)
+# 2. Habilitar mod_rewrite de Apache
 RUN a2enmod rewrite
 
 # 3. Apuntar Apache a la carpeta /public de Laravel
@@ -20,12 +20,16 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 WORKDIR /var/www/html
 COPY . .
 
-# 5. Instalar Composer y las dependencias de Laravel
+# 5. Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# 6. Dar permisos a Laravel para escribir en storage
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# 5.5 Instalar Node.js y compilar CSS/JS (Vite)
+RUN apt-get update && apt-get install -y nodejs npm
+RUN npm install && npm run build
+
+# 6. Dar permisos absolutos a las carpetas que Laravel necesita escribir
+RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
 # 7. Script de inicio para migrar y arrancar
 RUN echo '#!/bin/bash\n\
@@ -34,9 +38,6 @@ if [ ! -f /var/www/html/database/database.sqlite ]; then\n\
     chmod 777 /var/www/html/database/database.sqlite\n\
 fi\n\
 php artisan optimize:clear\n\
-php artisan config:cache\n\
-php artisan route:cache\n\
-php artisan view:cache\n\
 php artisan migrate --force\n\
 php artisan db:seed --force\n\
 apache2-foreground' > /usr/local/bin/start.sh
