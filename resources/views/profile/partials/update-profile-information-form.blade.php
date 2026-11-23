@@ -48,7 +48,7 @@
                 <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
                     <p class="text-sm text-yellow-800">
                         Tu correo electrónico no está verificado.
-                        <button form="send-verification" class="underline text-yellow-900 hover:text-yellow-700 font-semibold">
+                        <button form="send-verification" class="cursor-pointer underline text-yellow-900 hover:text-yellow-700 font-semibold">
                             Haz click aquí para reenviar el correo de verificación.
                         </button>
                     </p>
@@ -64,7 +64,7 @@
 
         <div class="flex items-center gap-4 pt-2">
             <button type="submit"
-                    class="inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold px-6 py-3 rounded-full transition shadow-md hover:shadow-pink-500/40">
+                    class="cursor-pointer inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white font-semibold px-6 py-3 rounded-full transition shadow-md hover:shadow-pink-500/40">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>

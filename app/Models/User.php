@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'email', 'password', 'system_role'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -22,7 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'system_role',
     ];
 
     /**
@@ -33,27 +33,38 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class);
     }
 
-    // Helper para saber si es admin
+    /**
+     * Empleado asociado (si el usuario es empleado)
+     */
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * Scope: usuarios de la web (sin Employee asociado)
+     */
+    public function scopeWebUsers($query)
+    {
+        return $query->whereDoesntHave('employee');
+    }
+
+    // Helpers de rol
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->system_role === 'admin';
     }
 
     public function isEmpleado(): bool
     {
-        return $this->role === 'empleado';
+        return $this->system_role === 'empleado';
     }
 
     public function isStaff(): bool
     {
-        return in_array($this->role, ['empleado', 'admin']);
+        return in_array($this->system_role, ['empleado', 'admin']);
     }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [

@@ -2,26 +2,31 @@
 
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Home
-Route::get('/', function () {
-    return view('pages.home');
-})->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Servicios
+// Servicios (público)
 Route::get('/servicios', function () {
     $services = \App\Models\Service::where('active', true)->orderBy('name')->get();
     return view('pages.services.index', compact('services'));
 })->name('services.index');
 
-// Estilistas
-Route::get('/estilistas', function () {
-    $stylists = \App\Models\Stylist::where('active', true)->orderBy('name')->get();
-    return view('pages.stylists.index', compact('stylists'));
-})->name('stylists.index');
+// Equipo (público) — solo profesionales
+Route::get('/equipo', function () {
+    $team = \App\Models\Employee::where('active', true)
+        ->where('category', 'profesional')
+        ->orderBy('name')
+        ->get();
 
-// Productos (tienda)
+    return view('pages.team.index', compact('team'));
+})->name('team.index');
+
+// Productos (público)
 Route::get('/productos', function () {
     $products = [
         ['icon' => '🧴', 'name' => 'Shampoo profesional',  'price' => '$12.000', 'rating' => 5, 'reviews' => 94,  'badge' => 'Popular'],
@@ -36,7 +41,7 @@ Route::get('/productos', function () {
     return view('pages.store.index', compact('products'));
 })->name('products.index');
 
-// ⚠️ Selector de servicio (debe ir ANTES de bookings.create)
+// Selector de servicio
 Route::get('/reservar', function () {
     $services = \App\Models\Service::where('active', true)->orderBy('name')->get();
     return view('pages.bookings.pick-service', compact('services'));
@@ -60,16 +65,37 @@ Route::middleware('auth')->group(function () {
         ->name('bookings.destroy');
 });
 
-// Dashboard (admin)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'admin'])->name('dashboard');
-
 // Perfil
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Admin
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    // Servicios
+    Route::resource('services', \App\Http\Controllers\Admin\ServiceController::class);
+    // Empleados
+    Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class);
+    // Productos
+    Route::resource('products', \App\Http\Controllers\Admin\ProductController::class);
+    // Reservas
+    Route::get('bookings', [\App\Http\Controllers\Admin\BookingController::class, 'index'])->name('bookings.index');
+    Route::patch('bookings/{booking}/status', [\App\Http\Controllers\Admin\BookingController::class, 'updateStatus'])->name('bookings.updateStatus');
+    Route::delete('bookings/{booking}', [\App\Http\Controllers\Admin\BookingController::class, 'destroy'])->name('bookings.destroy');
+    // Usuarios
+    Route::resource('users', UserController::class)
+        ->only(['index', 'show', 'destroy']);
+});
+
+// Portal del empleado
+Route::middleware(['auth', 'employee'])->prefix('portal')->name('portal.')->group(function () {
+    Route::get('/', function () {
+        return view('portal.dashboard');
+    })->name('dashboard');
 });
 
 require __DIR__ . '/auth.php';

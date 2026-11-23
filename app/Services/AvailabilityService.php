@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Booking;
 use App\Models\Service;
-use App\Models\Stylist;
+use App\Models\Employee;
 use Carbon\Carbon;
 
 class AvailabilityService
@@ -12,7 +12,7 @@ class AvailabilityService
     /**
      * Devuelve los slots disponibles para una fecha y servicio dados.
      */
-    public function getSlots(Carbon $date, int $serviceId, ?int $stylistId = null): array
+    public function getSlots(Carbon $date, int $serviceId, ?int $employeeId = null): array
     {
         $config = config('salon');
         $dayOfWeek = $date->dayOfWeek;
@@ -34,8 +34,8 @@ class AvailabilityService
         $query = Booking::whereDate('date', $date->toDateString())
             ->whereIn('status', ['pending', 'confirmed']);
 
-        if ($stylistId) {
-            $query->where('stylist_id', $stylistId);
+        if ($employeeId) {
+            $query->where('employee_id', $employeeId);
         }
 
         $existing = $query->get(['start_time', 'end_time']);
@@ -75,7 +75,7 @@ class AvailabilityService
      *
      * @return array<string, ['full' => bool, 'available' => int, 'total' => int]>
      */
-    public function getMonthAvailability(int $year, int $month, int $serviceId, ?int $stylistId = null): array
+    public function getMonthAvailability(int $year, int $month, int $serviceId, ?int $employeeId = null): array
     {
         $config = config('salon');
         $service = Service::findOrFail($serviceId);
@@ -93,8 +93,8 @@ class AvailabilityService
             ])
             ->whereIn('status', ['pending', 'confirmed']);
 
-        if ($stylistId) {
-            $bookingsQuery->where('stylist_id', $stylistId);
+        if ($employeeId) {
+            $bookingsQuery->where('employee_id', $employeeId);
         }
 
         $bookings = $bookingsQuery->get(['date', 'start_time', 'end_time'])->groupBy(function ($b) {

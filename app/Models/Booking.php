@@ -8,8 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Booking extends Model
 {
     protected $fillable = [
-        'user_id', 'service_id', 'stylist_id', 'date',
-        'start_time', 'end_time', 'status', 'notes', 'code',
+        'user_id',
+        'service_id',
+        'employee_id',
+        'date',
+        'start_time',
+        'end_time',
+        'status',
+        'notes',
+        'code',
     ];
 
     protected $casts = [
@@ -18,9 +25,18 @@ class Booking extends Model
         'end_time'   => 'datetime:H:i',
     ];
 
-    public function user(): BelongsTo    { return $this->belongsTo(User::class); }
-    public function service(): BelongsTo { return $this->belongsTo(Service::class); }
-    public function stylist(): BelongsTo { return $this->belongsTo(Stylist::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
+    }
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
 
     public static function generateCode(): string
     {

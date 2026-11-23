@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Service;
-use App\Models\Stylist;
+use App\Models\Employee;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -17,29 +17,51 @@ class BookingController extends Controller
 
     public function index()
     {
-        $bookings = auth()->user()
-            ->bookings()
-            ->with(['service', 'stylist'])
+        $user = auth()->user();
+
+        // Próximas / activas
+        $bookings = $user->bookings()
+            ->with(['service', 'employee'])
             ->whereIn('status', ['pending', 'confirmed'])
             ->whereDate('date', '>=', now()->toDateString())
             ->orderBy('date')->orderBy('start_time')
             ->get();
 
-        return view('pages.bookings.index', compact('bookings'));
+        // Historial: pasadas o canceladas
+        $history = $user->bookings()
+            ->with(['service', 'employee'])
+            ->where(function ($q) {
+                $q->whereDate('date', '<', now()->toDateString())
+                    ->orWhere('status', 'cancelled');
+            })
+            ->orderByDesc('date')->orderByDesc('start_time')
+            ->paginate(10);
+
+        return view('pages.bookings.index', compact('bookings', 'history'));
     }
 
     public function create(Service $service)
     {
-        $stylists = Stylist::where('active', true)->orderBy('name')->get();
-        return view('pages.bookings.create', compact('service', 'stylists'));
+        // Validar que el servicio esté activo
+        if (!$service->active) {
+            return redirect()->route('bookings.pick')->with('error', 'Ese servicio no está disponible actualmente.');
+        }
+
+        // Solo traemos a los profesionales activos que REALIZAN este servicio
+        $employees = $service->employees()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('pages.bookings.create', compact('service', 'employees'));
     }
 
     public function slots(Request $request)
     {
         $request->validate([
-            'service_id' => 'required|exists:services,id',
-            'date'       => 'required|date|after_or_equal:today',
-            'stylist_id' => 'nullable|exists:stylists,id',
+            'service_id'  => 'required|exists:services,id',
+            'date'        => 'required|date|after_or_equal:today',
+            'employee_id' => 'nullable|exists:employees,id,category,profesional',
         ]);
 
         $date = Carbon::parse($request->date);
@@ -48,10 +70,28 @@ class BookingController extends Controller
             return response()->json(['slots' => [], 'message' => 'Fecha demasiado lejana']);
         }
 
+        $employeeId = null;
+        if ($request->filled('employee_id')) {
+            // Verificar que el empleado esté activo Y realice este servicio
+            $isValidPro = Employee::where('id', $request->employee_id)
+                ->where('category', 'profesional')
+                ->where('active', true)
+                ->whereHas('services', function ($q) use ($request) {
+                    $q->where('services.id', $request->service_id);
+                })
+                ->exists();
+
+            if (! $isValidPro) {
+                return response()->json(['slots' => [], 'message' => 'El estilista no realiza este servicio.']);
+            }
+
+            $employeeId = (int) $request->employee_id;
+        }
+
         $slots = $this->availability->getSlots(
             $date,
             (int) $request->service_id,
-            $request->stylist_id ? (int) $request->stylist_id : null,
+            $employeeId,
         );
 
         return response()->json(['slots' => $slots]);
@@ -64,17 +104,18 @@ class BookingController extends Controller
     public function monthAvailability(Request $request)
     {
         $request->validate([
-            'service_id' => 'required|exists:services,id',
-            'year'       => 'required|integer|min:2020|max:2100',
-            'month'      => 'required|integer|min:1|max:12',
-            'stylist_id' => 'nullable|exists:stylists,id',
+            'service_id'  => 'required|exists:services,id',
+            'year'        => 'required|integer|min:2020|max:2100',
+            'month'       => 'required|integer|min:1|max:12',
+            // 🔧 CAMBIO: solo acepta empleados profesionales
+            'employee_id' => 'nullable|exists:employees,id,category,profesional',
         ]);
 
         $days = $this->availability->getMonthAvailability(
             (int) $request->year,
             (int) $request->month,
             (int) $request->service_id,
-            $request->stylist_id ? (int) $request->stylist_id : null,
+            $request->employee_id ? (int) $request->employee_id : null,
         );
 
         return response()->json(['days' => $days]);
@@ -83,16 +124,34 @@ class BookingController extends Controller
     public function store(Request $request, Service $service)
     {
         $data = $request->validate([
-            'date'       => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
-            'stylist_id' => 'nullable|exists:stylists,id',
-            'notes'      => 'nullable|string|max:500',
+            'date'        => 'required|date|after_or_equal:today',
+            'start_time'  => 'required|date_format:H:i',
+            // 🔧 CAMBIO: solo acepta empleados profesionales
+            'employee_id' => 'nullable|exists:employees,id,category,profesional',
+            'notes'       => 'nullable|string|max:500',
         ]);
 
-        $date      = Carbon::parse($data['date']);
-        $startTime = Carbon::parse($date->toDateString() . ' ' . $data['start_time']);
-        $endTime   = $startTime->copy()->addMinutes($service->duration_minutes);
-        $stylistId = $data['stylist_id'] ?? null;
+        $date       = Carbon::parse($data['date']);
+        $startTime  = Carbon::parse($date->toDateString() . ' ' . $data['start_time']);
+        $endTime    = $startTime->copy()->addMinutes($service->duration_minutes);
+        $employeeId = $data['employee_id'] ?? null;
+
+        // 🔧 CAMBIO: verificar que el empleado esté activo Y realice este servicio
+        if ($employeeId) {
+            $isActivePro = Employee::where('id', $employeeId)
+                ->where('category', 'profesional')
+                ->where('active', true)
+                ->whereHas('services', function ($q) use ($service) {
+                    $q->where('services.id', $service->id);
+                })
+                ->exists();
+
+            if (! $isActivePro) {
+                throw ValidationException::withMessages([
+                    'employee_id' => 'El estilista seleccionado no es válido para este servicio.',
+                ]);
+            }
+        }
 
         // 🔒 LÍMITE POR USUARIO — máximo N reservas activas
         $maxPerUser = config('salon.max_active_bookings_per_user', 3);
@@ -120,18 +179,17 @@ class BookingController extends Controller
         }
 
         try {
-            $booking = DB::transaction(function () use ($data, $date, $startTime, $endTime, $stylistId, $service) {
+            $booking = DB::transaction(function () use ($data, $date, $startTime, $endTime, $employeeId, $service) {
 
                 // Bloquea filas del mismo día (y estilista si aplica)
                 $query = Booking::whereDate('date', $date->toDateString())
                     ->whereIn('status', ['pending', 'confirmed'])
                     ->lockForUpdate();
 
-                if ($stylistId) {
-                    $query->where('stylist_id', $stylistId);
+                if ($employeeId) {
+                    $query->where('employee_id', $employeeId);
                 }
 
-                // Comparar por string HH:MM:SS para evitar problemas de Carbon
                 $startStr = $startTime->format('H:i:s');
                 $endStr   = $endTime->format('H:i:s');
 
@@ -148,21 +206,20 @@ class BookingController extends Controller
                 }
 
                 return Booking::create([
-                    'user_id'    => auth()->id(),
-                    'service_id' => $service->id,
-                    'stylist_id' => $stylistId,
-                    'date'       => $date->toDateString(),
-                    'start_time' => $startStr,
-                    'end_time'   => $endStr,
-                    'status'     => 'confirmed',
-                    'notes'      => $data['notes'] ?? null,
-                    'code'       => Booking::generateCode(),
+                    'user_id'     => auth()->id(),
+                    'service_id'  => $service->id,
+                    'employee_id' => $employeeId,
+                    'date'        => $date->toDateString(),
+                    'start_time'  => $startStr,
+                    'end_time'    => $endStr,
+                    'status'      => 'confirmed',
+                    'notes'       => $data['notes'] ?? null,
+                    'code'        => Booking::generateCode(),
                 ]);
             });
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-            // Captura específica del índice único
             return back()->withErrors([
                 'start_time' => 'Ese horario acaba de ser tomado por otra persona. Elige otro.',
             ])->withInput();

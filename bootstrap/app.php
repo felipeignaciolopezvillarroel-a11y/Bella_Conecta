@@ -14,8 +14,22 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'employee' => \App\Http\Middleware\EmployeeMiddleware::class,
         ]);
+
+        // Redirigir invitados al login
+        $middleware->redirectGuestsTo(fn() => route('login'));
+
+        // Redirigir usuarios autenticados al home
+        $middleware->redirectUsersTo(fn() => route('home'));
+
+        // Redirección general (para middleware que busquen 'dashboard')
+        $middleware->redirectTo(
+            guests: '/login',
+            users: '/home'
+        );
     })
+
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
