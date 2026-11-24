@@ -9,13 +9,17 @@ RUN npm run build
 # ETAPA 2: Configurar PHP y Apache
 FROM php:8.3-apache
 
-# Instalar extensiones de PHP (PostgreSQL, Zip)
+# Instalar extensiones de PHP (PostgreSQL, Zip, GD)
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     libpq-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
     zip \
     unzip \
-    && docker-php-ext-install zip pdo pdo_pgsql pgsql \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) zip pdo pdo_pgsql pgsql gd \
     && rm -rf /var/lib/apt/lists/*
 
 # Habilitar mod_rewrite
