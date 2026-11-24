@@ -9,13 +9,14 @@ RUN npm run build
 # ETAPA 2: Configurar PHP y Apache
 FROM php:8.3-apache
 
-# Instalar extensiones de PHP (SQLite, Zip)
+# Instalar extensiones de PHP (PostgreSQL, Zip)
 RUN apt-get update && apt-get install -y \
     libzip-dev \
-    libsqlite3-dev \
+    libpq-dev \
     zip \
     unzip \
-    && docker-php-ext-install zip pdo pdo_sqlite
+    && docker-php-ext-install zip pdo pdo_pgsql pgsql \
+    && rm -rf /var/lib/apt/lists/*
 
 # Habilitar mod_rewrite
 RUN a2enmod rewrite
@@ -36,18 +37,15 @@ COPY --from=frontend /app/public/build ./public/build
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# Dar permisos
-RUN chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+# Dar permisos a storage y bootstrap/cache para Apache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Script de inicio
 RUN echo '#!/bin/bash\n\
-if [ ! -f /var/www/html/database/database.sqlite ]; then\n\
-    touch /var/www/html/database/database.sqlite\n\
-    chmod 777 /var/www/html/database/database.sqlite\n\
-fi\n\
-php artisan optimize:clear\n\
+php artisan config:clear\n\
+php artisan cache:clear\n\
 php artisan migrate --force\n\
-php artisan db:seed --force\n\
 apache2-foreground' > /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
 
