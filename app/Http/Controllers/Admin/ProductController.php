@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
-use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 
 class ProductController extends Controller
@@ -138,7 +137,7 @@ class ProductController extends Controller
         }
 
         $manager = new ImageManager(new Driver());
-        $encoded = $manager->decodePath($file->getRealPath())
+        $encoded = $manager->read($file->getRealPath())
             ->cover(600, 600) // Redimensiona a 600x600 (cuadrado)
             ->encode(new WebpEncoder(quality: 80));
 
