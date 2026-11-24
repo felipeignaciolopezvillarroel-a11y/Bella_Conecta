@@ -48,6 +48,7 @@ php artisan config:clear\n\
 php artisan cache:clear\n\
 php artisan migrate --force\n\
 apache2-foreground' > /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
 
 EXPOSE 80
 CMD ["/usr/local/bin/start.sh"]
