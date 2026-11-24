@@ -43,11 +43,11 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 # Script de inicio
 RUN echo '#!/bin/bash\n\
+set -e\n\
 php artisan config:clear\n\
 php artisan cache:clear\n\
 php artisan migrate --force\n\
 apache2-foreground' > /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
 
 EXPOSE 80
 CMD ["/usr/local/bin/start.sh"]
