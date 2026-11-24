@@ -126,7 +126,9 @@
                                 Ver todos los servicios
                             </a>
 
-                            <p class="text-center text-xs text-gray-500">✨ Sin costo de reserva</p>
+                            <p class="text-center text-xs text-gray-500">
+                                Se aclara que este sitio es exclusivamente de prueba y las acciones realizadas en él no constituyen movimientos reales; todos los productos, servicios y profesionales mostrados corresponden a datos ficticios.
+                            </p>
                         </div>
                     </div>
                 </div>
