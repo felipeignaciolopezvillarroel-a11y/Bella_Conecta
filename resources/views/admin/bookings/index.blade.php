@@ -6,6 +6,23 @@
 @section('content')
 <div class="space-y-6">
 
+    {{-- Modal de confirmación --}}
+    <x-confirm-modal
+        name="delete-booking"
+        title="Eliminar reserva"
+        confirm-text="Eliminar reserva"
+        cancel-text="Cancelar"
+        variant="danger">
+        <p>
+            Vas a eliminar la reserva
+            <strong id="delete-booking-code" class="font-mono text-pink-600"></strong>
+            de <strong id="delete-booking-client" class="text-[#1F1B1A]"></strong>.
+        </p>
+        <p class="text-red-600 font-medium">
+            Esta acción no se puede deshacer. El horario volverá a quedar disponible para otros clientes.
+        </p>
+    </x-confirm-modal>
+
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -22,7 +39,7 @@
             <div class="flex-1 w-full">
                 <label class="block text-xs font-semibold text-gray-500 mb-1">Buscar</label>
                 <div class="relative">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cliente, código o servicio..."
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cliente, código, servicio o estilista..."
                         class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#EEE3DD] focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none transition text-sm">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,7 +70,7 @@
 
             {{-- Botones --}}
             <div class="flex gap-2 w-full sm:w-auto">
-                <button type="submit" class="w-full sm:w-auto bg-pink-600 hover:bg-pink-700 text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-sm text-sm">
+                <button type="submit" class="cursor-pointer w-full sm:w-auto bg-pink-600 hover:bg-pink-700 text-white font-semibold px-5 py-2.5 rounded-xl transition shadow-sm text-sm">
                     Filtrar
                 </button>
                 @if(request()->anyFilled(['search', 'status', 'date']))
@@ -69,7 +86,7 @@
     <div class="bg-white border border-[#EEE3DD] rounded-2xl shadow-sm">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-                <thead class="bg-[#FDF8F5] text-gray-500 border-b border-[#EEE3DD]">
+                <thead class="text-gray-500 border-b border-[#EEE3DD]">
                     <tr>
                         <th class="px-6 py-4 font-semibold">Código</th>
                         <th class="px-6 py-4 font-semibold">Cliente</th>
@@ -123,21 +140,19 @@
                             <div class="flex items-center justify-end gap-1">
                                 {{-- Menú de cambio de estado --}}
                                 <div x-data="{ 
-            open: false, 
-            top: 0, 
-            left: 0,
-            toggleMenu(event) {
-                this.open = !this.open;
-                if (this.open) {
-                    const rect = event.currentTarget.getBoundingClientRect();
-                    this.top = rect.bottom + 8;
-                    this.left = rect.right - 125;
-                }
-            }
-         }"
-                                    x-init="
-            window.addEventListener('scroll', () => { open = false; }, { passive: true });
-         "
+                                        open: false, 
+                                        top: 0, 
+                                        left: 0,
+                                        toggleMenu(event) {
+                                            this.open = !this.open;
+                                            if (this.open) {
+                                                const rect = event.currentTarget.getBoundingClientRect();
+                                                this.top = rect.bottom + 8;
+                                                this.left = rect.right - 125;
+                                            }
+                                        }
+                                     }"
+                                    x-init="window.addEventListener('scroll', () => { open = false; }, { passive: true });"
                                     class="relative">
 
                                     <button @click="toggleMenu($event)" class="cursor-pointer p-2 text-gray-500 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition" title="Cambiar estado">
@@ -167,16 +182,34 @@
                                     </div>
                                 </div>
 
-                                {{-- Eliminar --}}
-                                <form action="{{ route('admin.bookings.destroy', $booking) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar esta reserva?')">
+                                {{-- Botón Eliminar --}}
+                                <form
+                                    id="delete-booking-form-{{ $booking->id }}"
+                                    action="{{ route('admin.bookings.destroy', $booking) }}"
+                                    method="POST"
+                                    class="hidden"
+                                    x-data
+                                    x-on:confirmed-delete-booking.window="
+                                        if ($event.detail?.id === {{ $booking->id }}) $el.submit()
+                                    ">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="cursor-pointer p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
                                 </form>
+
+                                <button
+                                    type="button"
+                                    x-data
+                                    x-on:click="
+                                        document.getElementById('delete-booking-code').textContent = @js($booking->code);
+                                        document.getElementById('delete-booking-client').textContent = @js($booking->user->name ?? 'Cliente eliminado');
+                                        $dispatch('open-confirm-delete-booking', { id: {{ $booking->id }} });
+                                    "
+                                    class="cursor-pointer p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                    title="Eliminar reserva {{ $booking->code }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
                             </div>
                         </td>
                     </tr>

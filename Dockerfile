@@ -50,7 +50,9 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 RUN echo '#!/bin/bash\n\
 set -e\n\
 php artisan storage:link --force\n\
-php artisan config:clear\n\
+php artisan config:cache\n\
+php artisan route:cache\n\
+php artisan view:cache\n\
 php artisan migrate --force\n\
 apache2-foreground' > /usr/local/bin/start.sh
 

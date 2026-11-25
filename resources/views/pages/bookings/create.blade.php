@@ -3,17 +3,26 @@
 @section('title', 'Reservar ' . $service->name)
 
 @section('content')
-<section class="py-12 sm:py-16 bg-[#FDF8F5] min-h-screen">
-    <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12">
+<section class="py-12 sm:py-6 bg-[#FDF8F5] min-h-screen">
+    <div class="w-full mx-auto px-4 sm:px-8 lg:px-12">
 
-        <div class="mb-8">
-            <a href="{{ route('home') }}" class="text-sm text-gray-500 hover:text-pink-600">← Volver</a>
-            <h1 class="text-3xl sm:text-4xl font-bold text-[#1F1B1A] mt-3">
-                Reservar: {{ $service->name }} {{ $service->icon }}
-            </h1>
-            <p class="text-gray-600 mt-2">
-                Duración: {{ $service->duration_minutes }} min · Precio: ${{ number_format($service->price, 0, ',', '.') }}
-            </p>
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-bold text-[#1F1B1A] mt-3">
+                    Reservar: {{ $service->name }} {{ $service->icon }}
+                </h1>
+                <p class="text-gray-600 mt-2">
+                    Duración: {{ $service->duration_minutes }} min · Precio: ${{ number_format($service->price, 0, ',', '.') }}
+                </p>
+            </div>
+            
+            <a href="{{ route('home') }}" class="group inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-pink-600 bg-white hover:bg-pink-50/70 border border-[#EEE3DD] hover:border-pink-200 px-3.5 py-2 rounded-full shadow-xs transition">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                    class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+                <span>Volver</span>
+            </a>
         </div>
 
         @guest
@@ -53,6 +62,7 @@
             data-view-year="{{ now()->year }}"
             data-view-month="{{ now()->month }}"
             data-employees='@json($employeesJson)'
+            data-selected-employee="{{ $selectedEmployeeId ?? '' }}"
             data-route-slots="{{ route('bookings.slots') }}"
             data-route-month="{{ route('bookings.month') }}">
 
@@ -122,20 +132,20 @@
 
                         <div class="grid md:grid-cols-2 gap-5 mb-5">
 
-                            {{-- ══════════ ESTILISTA ══════════ --}}
+                                                        {{-- ══════════ ESTILISTA ══════════ --}}
                             <div>
                                 <label class="block text-sm font-semibold text-[#1F1B1A] mb-2">
-                                    Estilista <span class="text-gray-400 font-normal">(opcional)</span>
+                                    Estilista <span class="text-pink-600">*</span>
                                 </label>
 
                                 <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                                    {{-- Select nativo real (oculto) --}}
                                     <select name="employee_id"
                                         x-model="employeeId"
                                         @change="loadSlots()"
                                         class="sr-only"
+                                        required
                                         tabindex="-1">
-                                        <option value="">Cualquiera disponible</option>
+                                        <option value="">Selecciona un estilista</option>
                                         @foreach($employees as $s)
                                         <option value="{{ $s->id }}">{{ $s->name }} — {{ $s->role }}</option>
                                         @endforeach
@@ -144,20 +154,24 @@
                                     {{-- Trigger visual --}}
                                     <button type="button" @click="open = !open"
                                         class="cursor-pointer w-full flex items-center gap-3 pl-3.5 pr-3 py-2.5 rounded-xl border border-[#EEE3DD] bg-white hover:border-pink-300 focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none transition text-left">
+                                        
                                         <template x-if="employeeId === ''">
-                                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-100 to-fuchsia-100 flex items-center justify-center text-sm shrink-0">✨</div>
-                                        </template>
-                                        <template x-if="employeeId !== ''">
-                                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-100 to-fuchsia-100 flex items-center justify-center text-xs font-bold text-pink-600 shrink-0"
-                                                x-text="selectedEmployeeInitial()"></div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-sm font-semibold text-gray-400">Selecciona un estilista</p>
+                                                <p class="text-xs text-gray-400">Elige quién te atenderá</p>
+                                            </div>
                                         </template>
 
-                                        <div class="min-w-0 flex-1">
-                                            <p class="text-sm font-semibold text-[#1F1B1A] truncate"
-                                                x-text="selectedEmployeeName()"></p>
-                                            <p class="text-xs text-gray-500 truncate"
-                                                x-text="selectedEmployeeRole()"></p>
-                                        </div>
+                                        <template x-if="employeeId !== ''">
+                                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-100 to-fuchsia-100 flex items-center justify-center text-xs font-bold text-pink-600 shrink-0"
+                                                    x-text="selectedEmployeeInitial()"></div>
+                                                <div class="min-w-0">
+                                                    <p class="text-sm font-semibold text-[#1F1B1A] truncate" x-text="selectedEmployeeName()"></p>
+                                                    <p class="text-xs text-gray-500 truncate" x-text="selectedEmployeeRole()"></p>
+                                                </div>
+                                            </div>
+                                        </template>
 
                                         <span class="text-gray-400 transition shrink-0" :class="open ? 'rotate-180' : ''">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -169,19 +183,7 @@
                                     {{-- Panel de opciones --}}
                                     <div x-show="open" x-transition
                                         class="absolute z-30 mt-2 w-full bg-white border border-[#EEE3DD] rounded-2xl shadow-xl p-2 max-h-72 overflow-y-auto">
-                                        <button type="button"
-                                            @click="selectEmployee(''); open = false"
-                                            class="w-full flex items-center gap-3 p-2.5 rounded-xl transition text-left"
-                                            :class="employeeId === '' ? 'bg-pink-50 ring-1 ring-pink-200' : 'hover:bg-pink-50/60'">
-                                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-pink-100 to-fuchsia-100 flex items-center justify-center text-base shrink-0">✨</div>
-                                            <div class="min-w-0">
-                                                <p class="text-sm font-semibold text-[#1F1B1A] truncate">Cualquiera disponible</p>
-                                                <p class="text-xs text-gray-500 truncate">El primero libre</p>
-                                            </div>
-                                        </button>
-
-                                        <div class="my-1 border-t border-[#EEE3DD]"></div>
-
+                                        
                                         @foreach($employees as $s)
                                         <button type="button"
                                             @click="selectEmployee('{{ $s->id }}'); open = false"
@@ -335,7 +337,7 @@
                         </div>
 
                         <button type="submit"
-                            class="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3.5 rounded-full transition shadow-md hover:shadow-pink-500/40">
+                            class="cursor-pointer w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3.5 rounded-full transition shadow-md hover:shadow-pink-500/40">
                             Confirmar reserva
                         </button>
                     </form>

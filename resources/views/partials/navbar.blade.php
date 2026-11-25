@@ -6,12 +6,42 @@
         </a>
 
         <ul class="hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-medium text-gray-700">
-            <li><a href="{{ route('home') }}" class="hover:text-pink-600 transition">Inicio</a></li>
-            <li><a href="{{ route('services.index') }}" class="hover:text-pink-600 transition">Servicios</a></li>
-            <li><a href="{{ route('team.index') }}" class="hover:text-pink-600 transition">Nuestro Equipo</a></li>
-            <li><a href="{{ route('bookings.pick') }}" class="hover:text-pink-600 transition">Reservar</a></li>
-            <li><a href="{{ route('products.index') }}" class="hover:text-pink-600 transition">Productos</a></li>
-            <li><a href="{{ route('home') }}#reseñas" class="hover:text-pink-600 transition">Reseñas</a></li>
+            <li>
+                <a href="{{ route('home') }}"
+                    class="transition {{ request()->routeIs('home') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Inicio
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('services.index') }}"
+                    class="transition {{ request()->routeIs('services.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Servicios
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('team.index') }}"
+                    class="transition {{ request()->routeIs('team.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Nuestro Equipo
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('bookings.pick') }}"
+                    class="transition {{ request()->routeIs('bookings.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Reservar
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('products.index') }}"
+                    class="transition {{ request()->routeIs('products.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Productos
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('home') }}#reseñas"
+                    class="hover:text-pink-600 transition">
+                    Reseñas
+                </a>
+            </li>
         </ul>
 
         {{-- BOTONES AUTH DESKTOP --}}
@@ -20,7 +50,7 @@
             {{-- ========== DROPDOWN PARA CUALQUIER USUARIO AUTENTICADO ========== --}}
             <div class="relative" @click.away="userMenu = false">
                 <button @click="userMenu = !userMenu"
-                    class="cursor-pointer flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-pink-600 transition">
+                    class="cursor-pointer flex items-center gap-2 text-sm font-medium transition {{ request()->routeIs('profile.*', 'portal.*', 'admin.*') ? 'text-pink-600 font-semibold' : 'text-gray-700 hover:text-pink-600' }}">
                     <span>{{ auth()->user()->name }}</span>
                     <svg class="w-4 h-4 transition-transform" :class="userMenu ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -43,7 +73,7 @@
 
                             {{-- Mi cuenta: todos los usuarios --}}
                             <a href="{{ route('profile.edit') }}"
-                                class="flex items-center gap-3 py-2.5 px-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 rounded-lg transition">
+                                class="flex items-center gap-3 py-2.5 px-3 text-sm rounded-lg transition {{ request()->routeIs('profile.*') ? 'bg-pink-50 text-pink-600 font-semibold' : 'text-gray-700 hover:bg-pink-50 hover:text-pink-600' }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" width="24" height="24"
                                     viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
                                     stroke-linecap="round" stroke-linejoin="round">
@@ -57,7 +87,7 @@
                             {{-- Portal trabajadores: solo empleados y admins --}}
                             @if(auth()->user()->isStaff())
                             <a href="{{ route('portal.dashboard') }}"
-                                class="flex items-center gap-3 py-2.5 px-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 rounded-lg transition">
+                                class="flex items-center gap-3 py-2.5 px-3 text-sm rounded-lg transition {{ request()->routeIs('portal.*') ? 'bg-pink-50 text-pink-600 font-semibold' : 'text-gray-700 hover:bg-pink-50 hover:text-pink-600' }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" width="24" height="24"
                                     viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
                                     stroke-linecap="round" stroke-linejoin="round">
@@ -72,7 +102,7 @@
                             {{-- Panel administrativo: solo admins --}}
                             @if(auth()->user()->isAdmin() && Route::has('admin.dashboard'))
                             <a href="{{ route('admin.dashboard') }}"
-                                class="flex items-center gap-3 py-2.5 px-3 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-600 rounded-lg transition">
+                                class="flex items-center gap-3 py-2.5 px-3 text-sm rounded-lg transition {{ request()->routeIs('admin.*') ? 'bg-pink-50 text-pink-600 font-semibold' : 'text-gray-700 hover:bg-pink-50 hover:text-pink-600' }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" width="24" height="24"
                                     viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
                                     stroke-linecap="round" stroke-linejoin="round">
@@ -110,10 +140,12 @@
                 </div>
             </div>
             @else
-            <a href="{{ route('login') }}" class="text-sm font-medium text-gray-700 hover:text-pink-600 transition">
+            <a href="{{ route('login') }}"
+                class="text-sm font-medium transition {{ request()->routeIs('login') ? 'text-pink-600 font-semibold' : 'text-gray-700 hover:text-pink-600' }}">
                 Iniciar sesión
             </a>
-            <a href="{{ route('register') }}" class="bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition shadow-sm">
+            <a href="{{ route('register') }}"
+                class="text-white text-sm font-semibold px-5 py-2.5 rounded-full transition shadow-sm {{ request()->routeIs('register') ? 'bg-pink-700 ring-2 ring-pink-200' : 'bg-pink-600 hover:bg-pink-700' }}">
                 Crear cuenta
             </a>
             @endauth
@@ -132,12 +164,42 @@
     {{-- MENÚ MOBILE --}}
     <div x-show="open" x-cloak x-transition class="lg:hidden border-t border-[#EEE3DD] bg-white">
         <ul class="px-6 py-4 space-y-3 text-sm font-medium text-gray-700">
-            <li><a href="{{ route('home') }}" @click="open = false" class="block py-1 hover:text-pink-600">Inicio</a></li>
-            <li><a href="{{ route('services.index') }}" @click="open = false" class="block py-1 hover:text-pink-600">Servicios</a></li>
-            <li><a href="{{ route('team.index') }}" @click="open = false" class="block py-1 hover:text-pink-600">Estilistas</a></li>
-            <li><a href="{{ route('bookings.pick') }}" @click="open = false" class="block py-1 hover:text-pink-600">Reservar</a></li>
-            <li><a href="{{ route('products.index') }}" @click="open = false" class="block py-1 hover:text-pink-600">Productos</a></li>
-            <li><a href="{{ route('home') }}#reseñas" @click="open = false" class="block py-1 hover:text-pink-600">Reseñas</a></li>
+            <li>
+                <a href="{{ route('home') }}" @click="open = false"
+                    class="block py-1 transition {{ request()->routeIs('home') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Inicio
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('services.index') }}" @click="open = false"
+                    class="block py-1 transition {{ request()->routeIs('services.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Servicios
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('team.index') }}" @click="open = false"
+                    class="block py-1 transition {{ request()->routeIs('team.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Estilistas
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('bookings.pick') }}" @click="open = false"
+                    class="block py-1 transition {{ request()->routeIs('bookings.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Reservar
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('products.index') }}" @click="open = false"
+                    class="block py-1 transition {{ request()->routeIs('products.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Productos
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('home') }}#reseñas" @click="open = false"
+                    class="block py-1 hover:text-pink-600">
+                    Reseñas
+                </a>
+            </li>
         </ul>
 
         {{-- BOTONES AUTH MOBILE --}}
@@ -151,14 +213,14 @@
 
             {{-- Mi cuenta: todos --}}
             <a href="{{ route('profile.edit') }}" @click="open = false"
-                class="w-full text-center text-sm font-medium text-gray-700 border border-gray-300 rounded-full py-2.5 hover:border-pink-600 hover:text-pink-600 transition">
+                class="w-full text-center text-sm font-medium rounded-full py-2.5 transition {{ request()->routeIs('profile.*') ? 'bg-pink-50 border border-pink-600 text-pink-600 font-semibold' : 'text-gray-700 border border-gray-300 hover:border-pink-600 hover:text-pink-600' }}">
                 👤 Mi cuenta
             </a>
 
             {{-- Portal trabajadores: empleados y admins --}}
             @if(auth()->user()->isStaff())
             <a href="{{ route('portal.dashboard') }}" @click="open = false"
-                class="w-full text-center text-sm font-medium text-gray-700 border border-gray-300 rounded-full py-2.5 hover:border-pink-600 hover:text-pink-600 transition">
+                class="w-full text-center text-sm font-medium rounded-full py-2.5 transition {{ request()->routeIs('portal.*') ? 'bg-pink-50 border border-pink-600 text-pink-600 font-semibold' : 'text-gray-700 border border-gray-300 hover:border-pink-600 hover:text-pink-600' }}">
                 ⚙️ Portal trabajadores
             </a>
             @endif
@@ -166,7 +228,7 @@
             {{-- Panel administrativo: solo admins --}}
             @if(auth()->user()->isAdmin() && Route::has('admin.dashboard'))
             <a href="{{ route('admin.dashboard') }}" @click="open = false"
-                class="w-full text-center text-sm font-medium text-gray-700 border border-gray-300 rounded-full py-2.5 hover:border-pink-600 hover:text-pink-600 transition">
+                class="w-full text-center text-sm font-medium rounded-full py-2.5 transition {{ request()->routeIs('admin.*') ? 'bg-pink-50 border border-pink-600 text-pink-600 font-semibold' : 'text-gray-700 border border-gray-300 hover:border-pink-600 hover:text-pink-600' }}">
                 📊 Panel administrativo
             </a>
             @endif
@@ -180,11 +242,11 @@
             </form>
             @else
             <a href="{{ route('login') }}" @click="open = false"
-                class="w-full text-center text-sm font-medium text-gray-700 border border-gray-300 rounded-full py-2.5 hover:border-pink-600 hover:text-pink-600 transition">
+                class="w-full text-center text-sm font-medium rounded-full py-2.5 transition {{ request()->routeIs('login') ? 'bg-pink-50 border border-pink-600 text-pink-600 font-semibold' : 'text-gray-700 border border-gray-300 hover:border-pink-600 hover:text-pink-600' }}">
                 Iniciar sesión
             </a>
             <a href="{{ route('register') }}" @click="open = false"
-                class="w-full text-center bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition shadow-sm">
+                class="w-full text-center text-white text-sm font-semibold px-5 py-2.5 rounded-full transition shadow-sm {{ request()->routeIs('register') ? 'bg-pink-700 ring-2 ring-pink-200' : 'bg-pink-600 hover:bg-pink-700' }}">
                 Crear cuenta
             </a>
             @endauth

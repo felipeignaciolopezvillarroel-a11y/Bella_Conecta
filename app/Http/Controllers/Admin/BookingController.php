@@ -14,7 +14,7 @@ class BookingController extends Controller
     {
         $query = Booking::with(['user', 'service', 'employee']);
 
-        // Filtro por búsqueda (cliente, código, servicio)
+        // Filtro por búsqueda (cliente, código, servicio, estilista)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -25,6 +25,9 @@ class BookingController extends Controller
                   })
                   ->orWhereHas('service', function($s) use ($search) {
                       $s->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('employee', function($e) use ($search) {
+                      $e->where('name', 'like', "%{$search}%");
                   });
             });
         }

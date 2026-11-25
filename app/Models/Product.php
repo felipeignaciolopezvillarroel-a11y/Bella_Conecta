@@ -44,13 +44,14 @@ class Product extends Model
             return null;
         }
 
-        // Si es una URL externa (como Unsplash) o base64
         if (Str::startsWith($this->image, ['http://', 'https://', 'data:image/', '/storage/'])) {
             return $this->image;
         }
 
-        // Si es un archivo subido, lo busca en el disco público
-        return Storage::disk('public')->url($this->image);
+        $baseUrl = 'https://gzphzgaajevxbwwegduy.supabase.co/storage/v1/object/public/fotos';
+        $path = ltrim($this->image, '/');
+
+        return "{$baseUrl}/{$path}";
     }
 
     public function scopeSearch($query, $search)

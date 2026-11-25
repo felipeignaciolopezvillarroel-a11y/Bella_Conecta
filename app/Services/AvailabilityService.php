@@ -9,9 +9,6 @@ use Carbon\Carbon;
 
 class AvailabilityService
 {
-    /**
-     * Devuelve los slots disponibles para una fecha y servicio dados.
-     */
     public function getSlots(Carbon $date, int $serviceId, ?int $employeeId = null): array
     {
         $config = config('salon');
@@ -51,6 +48,7 @@ class AvailabilityService
             $slotStartStr = $slotStart->format('H:i:s');
             $slotEndStr   = $slotEnd->format('H:i:s');
 
+            // Detectar si los 90 min (o los que dure) se solapan con otra reserva
             $isBusy = $existing->contains(function ($b) use ($slotStartStr, $slotEndStr) {
                 $bStart = Carbon::parse($b->start_time)->format('H:i:s');
                 $bEnd   = Carbon::parse($b->end_time)->format('H:i:s');
@@ -69,12 +67,6 @@ class AvailabilityService
         return $slots;
     }
 
-    /**
-     * Devuelve los días de un mes con su disponibilidad general.
-     * Un día se marca "full" si TODOS los slots están ocupados (o es cerrado).
-     *
-     * @return array<string, ['full' => bool, 'available' => int, 'total' => int]>
-     */
     public function getMonthAvailability(int $year, int $month, int $serviceId, ?int $employeeId = null): array
     {
         $config = config('salon');
@@ -86,7 +78,6 @@ class AvailabilityService
 
         $result = [];
 
-        // Trae TODAS las reservas activas del mes de una sola vez (eficiente)
         $bookingsQuery = Booking::whereBetween('date', [
                 $start->toDateString(),
                 $end->toDateString(),
@@ -108,7 +99,6 @@ class AvailabilityService
             $hours     = $config['hours'][$dayOfWeek] ?? null;
 
             if (!$hours) {
-                // Día cerrado
                 $result[$dateStr] = ['full' => true, 'available' => 0, 'total' => 0, 'closed' => true];
                 $cursor->addDay();
                 continue;
@@ -118,7 +108,6 @@ class AvailabilityService
             $openTime  = Carbon::parse($dateStr . ' ' . $open);
             $closeTime = Carbon::parse($dateStr . ' ' . $close);
 
-            // Reservas activas del día
             $dayBookings = $bookings->get($dateStr, collect());
 
             $total     = 0;

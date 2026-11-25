@@ -42,9 +42,24 @@ Route::get('/productos', function () {
 })->name('products.index');
 
 // Selector de servicio
-Route::get('/reservar', function () {
-    $services = \App\Models\Service::where('active', true)->orderBy('name')->get();
-    return view('pages.bookings.pick-service', compact('services'));
+Route::get('/reservar', function (\Illuminate\Http\Request $request) {
+    $employeeUuid = $request->query('employee');
+    $employee = null;
+
+    if ($employeeUuid) {
+        // Buscamos al empleado por su UUID
+        $employee = \App\Models\Employee::where('uuid', $employeeUuid)->first();
+    }
+
+    if ($employee) {
+        // Si hay un empleado seleccionado, solo mostramos SUS servicios
+        $services = $employee->services()->where('active', true)->orderBy('name')->get();
+    } else {
+        // Si no, mostramos todos los servicios activos
+        $services = \App\Models\Service::where('active', true)->orderBy('name')->get();
+    }
+
+    return view('pages.bookings.pick-service', compact('services', 'employee'));
 })->name('bookings.pick');
 
 // Rutas de reservas

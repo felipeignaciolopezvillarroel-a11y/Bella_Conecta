@@ -33,7 +33,7 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        class="fixed inset-0 w-screen h-screen bg-black/50 backdrop-blur-sm"
         x-on:click="open = false"
     ></div>
 

@@ -246,10 +246,10 @@
                 <div class="shrink-0 w-[260px] sm:w-[280px] md:w-[300px]" data-card>
                     <x-team-card
                         :employee-id="$member->id"
+                        :uuid="$member->uuid"
                         :name="$member->name"
                         :role="$member->role ?? 'Profesional'"
-                        :image="$member->photo_url"
-                        :bio="$member->bio" />
+                        :image="$member->photo_url" />
                 </div>
                 @empty
                 <div class="w-full text-center text-gray-500 py-8">

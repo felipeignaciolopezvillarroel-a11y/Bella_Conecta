@@ -4,7 +4,7 @@
 
 @section('content')
 <section class="py-12 sm:py-16 bg-[#FDF8F5] min-h-screen">
-    <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12">
+    <div class="w-full mx-auto px-4 sm:px-8 lg:px-12">
 
         <div class="mb-8">
             <a href="{{ route('home') }}" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-pink-600 transition">

@@ -6,6 +6,22 @@
 @section('content')
 <div class="space-y-6">
 
+    {{-- Modal de confirmación --}}
+    <x-confirm-modal
+        name="delete-product"
+        title="Eliminar producto"
+        confirm-text="Eliminar producto"
+        cancel-text="Cancelar"
+        variant="danger">
+        <p>
+            Vas a eliminar el producto
+            <strong id="delete-product-name" class="text-[#1F1B1A]"></strong>.
+        </p>
+        <p class="text-red-600 font-medium">
+            Esta acción no se puede deshacer y el producto dejará de estar disponible en el catálogo.
+        </p>
+    </x-confirm-modal>
+
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -119,15 +135,34 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
                                 </a>
-                                <form action="{{ route('admin.products.destroy', $product) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este producto?')">
+
+                                {{-- Botón Eliminar --}}
+                                <form
+                                    id="delete-product-form-{{ $product->id }}"
+                                    action="{{ route('admin.products.destroy', $product) }}"
+                                    method="POST"
+                                    class="hidden"
+                                    x-data
+                                    x-on:confirmed-delete-product.window="
+                                        if ($event.detail?.id === {{ $product->id }}) $el.submit()
+                                    ">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
                                 </form>
+
+                                <button
+                                    type="button"
+                                    x-data
+                                    x-on:click="
+                                        document.getElementById('delete-product-name').textContent = @js($product->name);
+                                        $dispatch('open-confirm-delete-product', { id: {{ $product->id }} });
+                                    "
+                                    class="cursor-pointer p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                    title="Eliminar {{ $product->name }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
                             </div>
                         </td>
                     </tr>
