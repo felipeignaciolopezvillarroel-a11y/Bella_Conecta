@@ -36,14 +36,21 @@ class Employee extends Model
             return null;
         }
 
-        // Si ya es una URL externa o base64, la devolvemos tal cual
+        // Si ya es una URL externa, base64 o una ruta local antigua
         if (Str::startsWith($this->photo, ['http://', 'https://', 'data:image/'])) {
             return $this->photo;
         }
 
-        // Usamos el disco por defecto (s3 en Render, public en local si cambias el .env)
-        $disk = config('filesystems.default');
-        return Storage::disk($disk)->url($this->photo);
+        // Si estamos usando S3 (Supabase)
+        if (config('filesystems.default') === 's3') {
+            // Usamos la variable AWS_URL limpia (sin barra al final) + la ruta
+            $baseUrl = rtrim(env('AWS_URL'), '/');
+            $path = ltrim($this->photo, '/');
+            return "{$baseUrl}/{$path}";
+        }
+
+        // Fallback para local
+        return Storage::disk('public')->url($this->photo);
     }
 
     public function user(): BelongsTo
