@@ -36,21 +36,18 @@ class Employee extends Model
             return null;
         }
 
-        // Si ya es una URL externa, base64 o una ruta local antigua
+        // Si ya es una URL completa (http) o base64, la dejamos pasar
         if (Str::startsWith($this->photo, ['http://', 'https://', 'data:image/'])) {
             return $this->photo;
         }
 
-        // Si estamos usando S3 (Supabase)
-        if (config('filesystems.default') === 's3') {
-            // Usamos la variable AWS_URL limpia (sin barra al final) + la ruta
-            $baseUrl = rtrim(env('AWS_URL'), '/');
-            $path = ltrim($this->photo, '/');
-            return "{$baseUrl}/{$path}";
-        }
+        // FORZAMOS la URL de Supabase directamente
+        $baseUrl = 'https://gzphzgaajevxbwwegduy.supabase.co/storage/v1/object/public/fotos';
 
-        // Fallback para local
-        return Storage::disk('public')->url($this->photo);
+        // Limpiamos la ruta para que no tenga barras duplicadas
+        $path = ltrim($this->photo, '/');
+
+        return "{$baseUrl}/{$path}";
     }
 
     public function user(): BelongsTo
