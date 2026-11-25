@@ -12,7 +12,6 @@ class OrderController extends Controller
 {
     public function show(Order $order)
     {
-        // Solo el dueño de la orden (o un admin) puede verla
         abort_unless(auth()->id() === $order->user_id || (auth()->check() && auth()->user()->isAdmin()), 403);
 
         $order->load('items');
@@ -44,7 +43,7 @@ class OrderController extends Controller
                         throw new \Exception('Uno de los productos en el carrito tiene datos inválidos.');
                     }
 
-                    $product = Product::lockForUpdate()->find($productId);
+                    $product = Product::find($productId);
 
                     if (!$product || !$product->active) {
                         throw new \Exception('Uno de los productos ya no está disponible.');
@@ -63,14 +62,6 @@ class OrderController extends Controller
                         'price'        => $price,
                         'quantity'     => $quantity,
                     ];
-
-                    // Descontar stock de forma segura en PostgreSQL dentro de la transacción
-                    DB::table('products')
-                        ->where('id', $product->id)
-                        ->update([
-                            'stock' => DB::raw('stock - ' . $quantity),
-                            'updated_at' => now(),
-                        ]);
                 }
 
                 $order = Order::create([
@@ -84,6 +75,12 @@ class OrderController extends Controller
 
                 foreach ($itemsToInsert as $item) {
                     $order->items()->create($item);
+
+                    DB::table('products')
+                        ->where('id', $item['product_id'])
+                        ->update([
+                            'stock' => DB::raw('stock - ' . (int) $item['quantity']),
+                        ]);
                 }
 
                 return $order;
@@ -93,10 +90,10 @@ class OrderController extends Controller
                 ->with('success', '¡Boleta generada! Presenta este código al retirar tus productos.')
                 ->with('clear_cart', true);
         } catch (\Throwable $e) {
-            Log::error('Checkout error: ' . $e->getMessage(), [
+            Log::error('Checkout failed: ' . $e->getMessage(), [
                 'exception' => get_class($e),
                 'line' => $e->getLine(),
-                'file' => $e->getFile(),
+                'previous' => $e->getPrevious()?->getMessage(),
             ]);
 
             return back()->with('error', $e->getMessage());
