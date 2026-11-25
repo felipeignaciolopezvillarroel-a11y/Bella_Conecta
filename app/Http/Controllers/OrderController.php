@@ -31,39 +31,39 @@ class OrderController extends Controller
         }
 
         try {
-            $order = DB::transaction(function () use ($cartData) {
-                $total = 0;
-                $itemsToInsert = [];
+            $total = 0;
+            $itemsToInsert = [];
 
-                foreach ($cartData as $item) {
-                    $productId = $item['id'] ?? null;
-                    $quantity = (int) ($item['quantity'] ?? 0);
+            foreach ($cartData as $item) {
+                $productId = $item['id'] ?? null;
+                $quantity = (int) ($item['quantity'] ?? 0);
 
-                    if (!$productId || $quantity < 1) {
-                        throw new \Exception('Uno de los productos en el carrito tiene datos inválidos.');
-                    }
-
-                    $product = Product::find($productId);
-
-                    if (!$product || !$product->active) {
-                        throw new \Exception('Uno de los productos ya no está disponible.');
-                    }
-
-                    if ($product->stock < $quantity) {
-                        throw new \Exception("No hay suficiente stock de \"{$product->name}\". Solo quedan {$product->stock} unidades.");
-                    }
-
-                    $price = $product->discount_price ?? $product->price;
-                    $total += $price * $quantity;
-
-                    $itemsToInsert[] = [
-                        'product_id'   => $product->id,
-                        'product_name' => $product->name,
-                        'price'        => $price,
-                        'quantity'     => $quantity,
-                    ];
+                if (!$productId || $quantity < 1) {
+                    throw new \Exception('Uno de los productos en el carrito tiene datos inválidos.');
                 }
 
+                $product = Product::find($productId);
+
+                if (!$product || !$product->active) {
+                    throw new \Exception('Uno de los productos ya no está disponible.');
+                }
+
+                if ((int) $product->stock < $quantity) {
+                    throw new \Exception("No hay suficiente stock de \"{$product->name}\". Solo quedan {$product->stock} unidades.");
+                }
+
+                $price = $product->discount_price ?? $product->price;
+                $total += (float) $price * $quantity;
+
+                $itemsToInsert[] = [
+                    'product_id'   => $product->id,
+                    'product_name' => $product->name,
+                    'price'        => $price,
+                    'quantity'     => $quantity,
+                ];
+            }
+
+            $order = DB::transaction(function () use ($total, $itemsToInsert) {
                 $order = Order::create([
                     'user_id'        => auth()->id(),
                     'customer_name'  => auth()->user()->name,
@@ -92,6 +92,7 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             Log::error('Checkout failed: ' . $e->getMessage(), [
                 'exception' => get_class($e),
+                'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'previous' => $e->getPrevious()?->getMessage(),
             ]);
