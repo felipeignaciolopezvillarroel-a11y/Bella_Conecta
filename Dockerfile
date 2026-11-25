@@ -51,7 +51,6 @@ RUN echo '#!/bin/bash\n\
 set -e\n\
 php artisan storage:link --force\n\
 php artisan config:clear\n\
-php artisan cache:clear\n\
 php artisan migrate --force\n\
 apache2-foreground' > /usr/local/bin/start.sh
 
