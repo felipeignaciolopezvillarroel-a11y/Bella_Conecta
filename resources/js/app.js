@@ -1,4 +1,5 @@
 import Alpine from 'alpinejs';
+import './order-cards';
 import reservationForm from './reservation-form';
 
 window.Alpine = Alpine;

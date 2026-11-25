@@ -5,10 +5,17 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 // Home
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Ordenes
+Route::middleware('auth')->group(function () {
+    Route::get('/boleta/{order:code}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/checkout', [OrderController::class, 'store'])->name('orders.store');
+});
 
 // Servicios (público)
 Route::get('/servicios', function () {
@@ -28,16 +35,9 @@ Route::get('/equipo', function () {
 
 // Productos (público)
 Route::get('/productos', function () {
-    $products = [
-        ['icon' => '🧴', 'name' => 'Shampoo profesional',  'price' => '$12.000', 'rating' => 5, 'reviews' => 94,  'badge' => 'Popular'],
-        ['icon' => '💧', 'name' => 'Aceite capilar',       'price' => '$15.000', 'rating' => 5, 'reviews' => 67,  'badge' => null],
-        ['icon' => '✨', 'name' => 'Sérum reparador',      'price' => '$18.000', 'rating' => 5, 'reviews' => 128, 'badge' => 'Top ventas'],
-        ['icon' => '💅', 'name' => 'Esmalte premium',      'price' => '$8.000',  'rating' => 4, 'reviews' => 42,  'badge' => null],
-        ['icon' => '🌿', 'name' => 'Mascarilla nutritiva', 'price' => '$14.000', 'rating' => 5, 'reviews' => 81,  'badge' => 'Nuevo'],
-        ['icon' => '🧖', 'name' => 'Mascarilla facial',    'price' => '$16.000', 'rating' => 4, 'reviews' => 55,  'badge' => null],
-        ['icon' => '💆', 'name' => 'Aceite para barba',    'price' => '$13.000', 'rating' => 5, 'reviews' => 38,  'badge' => null],
-        ['icon' => '🌸', 'name' => 'Perfume floral',       'price' => '$22.000', 'rating' => 5, 'reviews' => 203, 'badge' => 'Favorito'],
-    ];
+    // Cambiamos el array estático por los productos reales de la BD
+    $products = \App\Models\Product::where('active', true)->orderBy('name')->get();
+    
     return view('pages.store.index', compact('products'));
 })->name('products.index');
 
@@ -111,6 +111,10 @@ Route::middleware(['auth', 'employee'])->prefix('portal')->name('portal.')->grou
     Route::get('/', function () {
         return view('portal.dashboard');
     })->name('dashboard');
+
+    // Recepcionista
+    Route::get('receptionist', [\App\Http\Controllers\Portal\ReceptionistController::class, 'index'])->name('receptionist.index');
+    Route::patch('receptionist/{order}/deliver', [\App\Http\Controllers\Portal\ReceptionistController::class, 'deliver'])->name('receptionist.deliver');
 });
 
 require __DIR__ . '/auth.php';

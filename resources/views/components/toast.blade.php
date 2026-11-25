@@ -101,54 +101,37 @@
 </div>
 
 @push('scripts')
+@verbatim
 <script>
-    function toastSystem() {
-        return {
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('toastSystem', () => ({
             toasts: [],
             nextId: 1,
 
             init() {
-                if (window.__toastSingleton) {
-                    return;
-                }
-                window.__toastSingleton = this;
-
+                // Escuchar SIEMPRE el evento, sin singleton
                 window.addEventListener('toast', (e) => {
                     this.add(e.detail.message, e.detail.type || 'info', e.detail.duration || 5000);
                 });
 
-                @if(session('success'))
-                    this.add(@json(session('success')), 'success');
-                @endif
-                @if(session('error'))
-                    this.add(@json(session('error')), 'error');
-                @endif
-                @if(session('warning'))
-                    this.add(@json(session('warning')), 'warning');
-                @endif
-                @if(session('info'))
-                    this.add(@json(session('info')), 'info');
-                @endif
-
-                @if($errors->any() && !session('error'))
-                    this.add(@json($errors->first()), 'error');
-                @endif
+                // Los mensajes de sesión los inyecta el backend via un evento distinto
+                const flashMessages = window.__flashMessages || [];
+                flashMessages.forEach(m => this.add(m.message, m.type, 5000));
             },
 
             add(message, type = 'info', duration = 5000) {
-                if (window.__toastSingleton && window.__toastSingleton !== this) {
-                    return;
-                }
-
                 const now = Date.now();
+
                 const duplicate = this.toasts.some(t =>
                     t.message === message &&
                     t.type === type &&
                     t.createdAt &&
                     (now - t.createdAt) < 500
                 );
-                if (duplicate) {
-                    return;
+                if (duplicate) return;
+
+                if (this.toasts.length >= 3) {
+                    this.toasts.shift();
                 }
 
                 const id = this.nextId++;
@@ -175,13 +158,13 @@
                         toast.progress = Math.max(0, 100 - (elapsed / duration) * 100);
                         if (elapsed >= duration) {
                             clearInterval(interval);
-                            this.close(id);
+                            this.removeToast(id);
                         }
                     }
                 }, tickMs);
             },
 
-            close(id) {
+            removeToast(id) {
                 const toast = this.toasts.find(t => t.id === id);
                 if (toast) {
                     toast.visible = false;
@@ -190,7 +173,8 @@
                     }, 250);
                 }
             }
-        };
-    }
+        }));
+    });
 </script>
+@endverbatim
 @endpush

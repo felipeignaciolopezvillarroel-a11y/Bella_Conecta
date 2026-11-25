@@ -19,18 +19,6 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('team.index') }}"
-                    class="transition {{ request()->routeIs('team.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
-                    Nuestro Equipo
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('bookings.pick') }}"
-                    class="transition {{ request()->routeIs('bookings.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
-                    Reservar
-                </a>
-            </li>
-            <li>
                 <a href="{{ route('products.index') }}"
                     class="transition {{ request()->routeIs('products.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
                     Productos
@@ -40,6 +28,12 @@
                 <a href="{{ route('home') }}#reseñas"
                     class="hover:text-pink-600 transition">
                     Reseñas
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('team.index') }}"
+                    class="transition {{ request()->routeIs('team.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Nuestro Equipo
                 </a>
             </li>
         </ul>
@@ -177,18 +171,6 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('team.index') }}" @click="open = false"
-                    class="block py-1 transition {{ request()->routeIs('team.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
-                    Estilistas
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('bookings.pick') }}" @click="open = false"
-                    class="block py-1 transition {{ request()->routeIs('bookings.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
-                    Reservar
-                </a>
-            </li>
-            <li>
                 <a href="{{ route('products.index') }}" @click="open = false"
                     class="block py-1 transition {{ request()->routeIs('products.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
                     Productos
@@ -198,6 +180,12 @@
                 <a href="{{ route('home') }}#reseñas" @click="open = false"
                     class="block py-1 hover:text-pink-600">
                     Reseñas
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('team.index') }}" @click="open = false"
+                    class="block py-1 transition {{ request()->routeIs('team.*') ? 'text-pink-600 font-semibold' : 'hover:text-pink-600' }}">
+                    Nuestro Equipo
                 </a>
             </li>
         </ul>
