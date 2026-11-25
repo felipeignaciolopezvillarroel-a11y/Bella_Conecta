@@ -142,17 +142,13 @@ class ProductController extends Controller
     // Verifica si ya existe un producto con el mismo nombre y marca (sin distinguir mayúsculas/espacios)
     private function hasDuplicateProduct(string $name, ?string $brand, ?int $ignoreId = null): bool
     {
-        $normalizedName = mb_strtolower(trim($name), 'UTF-8');
-        $normalizedBrand = $brand !== null ? mb_strtolower(trim($brand), 'UTF-8') : null;
+        $normalizedName = mb_strtolower(trim((string) $name), 'UTF-8');
+        $normalizedBrand = mb_strtolower(trim((string) ($brand ?? '')), 'UTF-8');
 
         return Product::query()
-            ->when($ignoreId !== null, fn ($q) => $q->where('id', '!=', $ignoreId))
-            ->whereRaw('LOWER(TRIM(name)) = ?', [$normalizedName])
-            ->when(
-                $normalizedBrand !== null && $normalizedBrand !== '',
-                fn ($q) => $q->whereRaw('LOWER(TRIM(brand)) = ?', [$normalizedBrand]),
-                fn ($q) => $q->where(fn ($sub) => $sub->whereNull('brand')->orWhereRaw("TRIM(brand) = ''"))
-            )
+            ->when($ignoreId !== null, fn($q) => $q->where('id', '!=', $ignoreId))
+            ->whereRaw('LOWER(TRIM(COALESCE(name, \'\'))) = ?', [$normalizedName])
+            ->whereRaw('LOWER(TRIM(COALESCE(brand, \'\'))) = ?', [$normalizedBrand])
             ->exists();
     }
 
