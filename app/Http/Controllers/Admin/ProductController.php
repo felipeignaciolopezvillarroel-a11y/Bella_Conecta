@@ -101,9 +101,9 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image_file')) {
-            // Eliminar la imagen anterior si existe en Supabase y no es URL externa
-            if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('supabase')->exists($product->image)) {
-                Storage::disk('supabase')->delete($product->image);
+            // Eliminar la imagen anterior si existe en el bucket y no es URL externa
+            if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('s3')->exists($product->image)) {
+                Storage::disk('s3')->delete($product->image);
             }
             $data['image'] = $this->storeWebp($request->file('image_file'));
         }
@@ -119,15 +119,15 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('supabase')->exists($product->image)) {
-            Storage::disk('supabase')->delete($product->image);
+        if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('s3')->exists($product->image)) {
+            Storage::disk('s3')->delete($product->image);
         }
         $product->delete();
         return redirect()->route('admin.products.index')
             ->with('success', 'Producto eliminado correctamente.');
     }
 
-    // Método privado para convertir y guardar la imagen como WebP en Supabase
+    // Método privado para convertir y guardar la imagen como WebP en el bucket (Supabase vía S3)
     private function storeWebp($file): string
     {
         $filename = Str::uuid() . '.webp';
@@ -138,7 +138,7 @@ class ProductController extends Controller
             ->cover(600, 600) // Redimensiona a 600x600 (cuadrado)
             ->encode(new WebpEncoder(quality: 80));
 
-        Storage::disk('supabase')->put($path, (string) $encoded);
+        Storage::disk('s3')->put($path, (string) $encoded);
 
         return $path;
     }
