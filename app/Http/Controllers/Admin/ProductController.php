@@ -81,7 +81,6 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        // Limpia los puntos de los precios antes de validar
         $request->merge([
             'price' => str_replace('.', '', $request->price),
             'discount_price' => $request->discount_price ? str_replace('.', '', $request->discount_price) : null,
@@ -113,9 +112,14 @@ class ProductController extends Controller
         }
 
         if ($request->hasFile('image_file')) {
-            // Eliminar la imagen anterior si existe en el bucket y no es URL externa
-            if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('s3')->exists($product->image)) {
-                Storage::disk('s3')->delete($product->image);
+            if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/'])) {
+                try {
+                    if (Storage::disk('s3')->exists($product->image)) {
+                        Storage::disk('s3')->delete($product->image);
+                    }
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
             $data['image'] = $this->storeWebp($request->file('image_file'));
         }
@@ -128,7 +132,7 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')
             ->with('success', 'Producto actualizado correctamente.');
     }
-
+    
     public function destroy(Product $product)
     {
         if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('s3')->exists($product->image)) {
