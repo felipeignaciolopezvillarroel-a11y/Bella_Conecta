@@ -101,9 +101,9 @@ class ProductController extends Controller
         ]);
 
         if ($request->hasFile('image_file')) {
-            // Eliminar la imagen anterior si existe
-            if ($product->image && Storage::disk('public')->exists($product->image)) {
-                Storage::disk('public')->delete($product->image);
+            // Eliminar la imagen anterior si existe en Supabase y no es URL externa
+            if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('supabase')->exists($product->image)) {
+                Storage::disk('supabase')->delete($product->image);
             }
             $data['image'] = $this->storeWebp($request->file('image_file'));
         }
@@ -119,30 +119,26 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        if ($product->image && Storage::disk('public')->exists($product->image)) {
-            Storage::disk('public')->delete($product->image);
+        if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('supabase')->exists($product->image)) {
+            Storage::disk('supabase')->delete($product->image);
         }
         $product->delete();
         return redirect()->route('admin.products.index')
             ->with('success', 'Producto eliminado correctamente.');
     }
 
-    // Método privado para convertir y guardar la imagen como WebP
+    // Método privado para convertir y guardar la imagen como WebP en Supabase
     private function storeWebp($file): string
     {
         $filename = Str::uuid() . '.webp';
         $path = 'products/' . $filename;
-
-        if (!Storage::disk('public')->exists('products')) {
-            Storage::disk('public')->makeDirectory('products');
-        }
 
         $manager = new ImageManager(new Driver());
         $encoded = $manager->read($file->getRealPath())
             ->cover(600, 600) // Redimensiona a 600x600 (cuadrado)
             ->encode(new WebpEncoder(quality: 80));
 
-        Storage::disk('public')->put($path, (string) $encoded);
+        Storage::disk('supabase')->put($path, (string) $encoded);
 
         return $path;
     }
