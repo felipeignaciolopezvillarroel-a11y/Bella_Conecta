@@ -1,5 +1,34 @@
 {{-- Toast notifications --}}
-<div x-data="toastSystem()"
+@php
+    $flashMessages = [];
+
+    foreach (['success', 'error', 'warning', 'info'] as $type) {
+        if (session()->has($type)) {
+            $flashMessages[] = [
+                'type' => $type,
+                'message' => session($type),
+            ];
+        }
+    }
+
+    if (session()->has('status')) {
+        $flashMessages[] = [
+            'type' => 'info',
+            'message' => session('status'),
+        ];
+    }
+
+    if ($errors->any()) {
+        foreach ($errors->all() as $error) {
+            $flashMessages[] = [
+                'type' => 'error',
+                'message' => $error,
+            ];
+        }
+    }
+@endphp
+
+<div x-data="toastSystem({{ \Illuminate\Support\Js::from($flashMessages) }})"
      x-init="init()"
      aria-live="polite"
      aria-atomic="true"
@@ -100,23 +129,25 @@
     </template>
 </div>
 
-@push('scripts')
-@verbatim
 <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('toastSystem', () => ({
+    window.toastSystem = function(initialMessages = []) {
+        return {
             toasts: [],
             nextId: 1,
+            initialized: false,
 
             init() {
-                // Escuchar SIEMPRE el evento, sin singleton
+                if (this.initialized) return;
+                this.initialized = true;
+
                 window.addEventListener('toast', (e) => {
+                    if (!e.detail || !e.detail.message) return;
                     this.add(e.detail.message, e.detail.type || 'info', e.detail.duration || 5000);
                 });
 
-                // Los mensajes de sesión los inyecta el backend via un evento distinto
-                const flashMessages = window.__flashMessages || [];
-                flashMessages.forEach(m => this.add(m.message, m.type, 5000));
+                (initialMessages || []).forEach(m => {
+                    this.add(m.message, m.type || 'info', m.type === 'error' ? 7000 : 5000);
+                });
             },
 
             add(message, type = 'info', duration = 5000) {
@@ -130,7 +161,7 @@
                 );
                 if (duplicate) return;
 
-                if (this.toasts.length >= 3) {
+                if (this.toasts.length >= 4) {
                     this.toasts.shift();
                 }
 
@@ -158,13 +189,13 @@
                         toast.progress = Math.max(0, 100 - (elapsed / duration) * 100);
                         if (elapsed >= duration) {
                             clearInterval(interval);
-                            this.removeToast(id);
+                            this.close(id);
                         }
                     }
                 }, tickMs);
             },
 
-            removeToast(id) {
+            close(id) {
                 const toast = this.toasts.find(t => t.id === id);
                 if (toast) {
                     toast.visible = false;
@@ -173,8 +204,6 @@
                     }, 250);
                 }
             }
-        }));
-    });
+        };
+    };
 </script>
-@endverbatim
-@endpush
