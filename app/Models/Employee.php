@@ -36,11 +36,14 @@ class Employee extends Model
             return null;
         }
 
-        if (Str::startsWith($this->photo, ['http://', 'https://', 'data:image/', '/storage/'])) {
+        // Si ya es una URL externa o base64, la devolvemos tal cual
+        if (Str::startsWith($this->photo, ['http://', 'https://', 'data:image/'])) {
             return $this->photo;
         }
 
-        return Storage::disk('public')->url($this->photo);
+        // Usamos el disco por defecto (s3 en Render, public en local si cambias el .env)
+        $disk = config('filesystems.default');
+        return Storage::disk($disk)->url($this->photo);
     }
 
     public function user(): BelongsTo
@@ -58,7 +61,6 @@ class Employee extends Model
         });
     }
 
-    // Opcional: Para que las rutas usen el UUID en lugar del ID
     public function getRouteKeyName()
     {
         return 'uuid';

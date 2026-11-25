@@ -17,28 +17,19 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        // Cargamos la relación con el usuario para poder buscar por el rol de sistema
         $query = Employee::with('user');
 
         if ($request->filled('search')) {
             $search = $request->search;
 
             $query->where(function ($q) use ($search) {
-                // Buscamos en el nombre del empleado
                 $q->where('name', 'like', "%{$search}%");
-
-                // Buscamos en la especialidad (columna 'role' de la tabla employees)
                 $q->orWhere('role', 'like', "%{$search}%");
-
-                // Buscamos en la categoría (profesional / administrativo)
                 $q->orWhere('category', 'like', "%{$search}%");
-
-                // Buscamos en el rol de sistema del usuario asociado (empleado / admin)
                 $q->orWhereHas('user', function ($userQuery) use ($search) {
                     $userQuery->where('system_role', 'like', "%{$search}%");
                 });
 
-                // Si buscan "Activo" o "Inactivo" (opcional, porque también está el estado)
                 if (str_contains(strtolower($search), 'activ')) {
                     $q->orWhere('active', true);
                 }
@@ -48,7 +39,6 @@ class EmployeeController extends Controller
             });
         }
 
-        // Paginamos de 8 en 8 y mantenemos la búsqueda en la URL
         $employees = $query->orderBy('name')->paginate(8)->withQueryString();
 
         return view('admin.employees.index', compact('employees'));
@@ -63,11 +53,10 @@ class EmployeeController extends Controller
     {
         $data = $this->validateEmployee($request);
 
-        // Crear usuario
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
+            'name'        => $data['name'],
+            'email'       => $data['email'],
+            'password'    => Hash::make($data['password']),
             'system_role' => $data['system_role'],
         ]);
 
@@ -81,10 +70,7 @@ class EmployeeController extends Controller
 
         $data['active'] = $request->has('active');
 
-        // 1. Crear el empleado
         $employee = Employee::create($data);
-
-        // 2. Sincronizar los servicios seleccionados
         $employee->services()->sync($request->input('services', []));
 
         return redirect()->route('admin.employees.index')
@@ -101,12 +87,12 @@ class EmployeeController extends Controller
     {
         $data = $this->validateEmployee($request, $employee);
 
-        // Actualizar usuario
         $userData = [
-            'name'  => $data['name'],
-            'email' => $data['email'],
+            'name'        => $data['name'],
+            'email'       => $data['email'],
             'system_role' => $data['system_role'],
         ];
+        
         if (!empty($data['password'])) {
             $userData['password'] = Hash::make($data['password']);
         }
@@ -120,24 +106,24 @@ class EmployeeController extends Controller
             $data['user_id'] = $user->id;
         }
 
+        // Usamos el disco por defecto (que será S3 en Render)
+        $disk = config('filesystems.default');
+
         if ($request->filled('photo_file')) {
-            if ($employee->photo && Storage::disk('public')->exists($employee->photo)) {
-                Storage::disk('public')->delete($employee->photo);
+            if ($employee->photo && Storage::disk($disk)->exists($employee->photo)) {
+                Storage::disk($disk)->delete($employee->photo);
             }
             $data['photo'] = $this->storeWebpFromBase64($request->input('photo_file'));
         } elseif ($request->hasFile('photo_file')) {
-            if ($employee->photo && Storage::disk('public')->exists($employee->photo)) {
-                Storage::disk('public')->delete($employee->photo);
+            if ($employee->photo && Storage::disk($disk)->exists($employee->photo)) {
+                Storage::disk($disk)->delete($employee->photo);
             }
             $data['photo'] = $this->storeWebp($request->file('photo_file'));
         }
 
         $data['active'] = $request->has('active');
 
-        // 1. Actualizar el empleado
         $employee->update($data);
-
-        // 2. Sincronizar los servicios seleccionados
         $employee->services()->sync($request->input('services', []));
 
         return redirect()->route('admin.employees.index')
@@ -146,11 +132,12 @@ class EmployeeController extends Controller
 
     public function destroy(Employee $employee)
     {
-        if ($employee->photo && Storage::disk('public')->exists($employee->photo)) {
-            Storage::disk('public')->delete($employee->photo);
+        $disk = config('filesystems.default');
+
+        if ($employee->photo && Storage::disk($disk)->exists($employee->photo)) {
+            Storage::disk($disk)->delete($employee->photo);
         }
 
-        // Eliminar usuario asociado si existe
         if ($employee->user) {
             $employee->user->delete();
         }
@@ -167,7 +154,7 @@ class EmployeeController extends Controller
 
         return $request->validate([
             'name'        => 'required|string|max:255',
-            'role'        => 'nullable|string|max:255', // especialidad
+            'role'        => 'nullable|string|max:255',
             'category'    => 'required|in:profesional,administrativo',
             'bio'         => 'nullable|string|max:1000',
             'email'       => 'required|email|max:255|unique:users,email' . ($userId ? ',' . $userId : ''),
@@ -191,16 +178,14 @@ class EmployeeController extends Controller
         $filename = Str::uuid() . '.webp';
         $path = 'employees/' . $filename;
 
-        if (!Storage::disk('public')->exists('employees')) {
-            Storage::disk('public')->makeDirectory('employees');
-        }
-
         $manager = new ImageManager(new Driver());
         $encoded = $manager->read($file->getRealPath())
             ->cover(600, 600)
             ->toWebp(80);
 
-        Storage::disk('public')->put($path, (string) $encoded);
+        // Usamos el disco por defecto
+        $disk = config('filesystems.default');
+        Storage::disk($disk)->put($path, (string) $encoded);
 
         return $path;
     }
@@ -210,10 +195,6 @@ class EmployeeController extends Controller
         $filename = Str::uuid() . '.webp';
         $path = 'employees/' . $filename;
 
-        if (!Storage::disk('public')->exists('employees')) {
-            Storage::disk('public')->makeDirectory('employees');
-        }
-
         $base64 = preg_replace('#^data:image/\w+;base64,#i', '', $dataUrl);
         $binary = base64_decode($base64);
 
@@ -222,7 +203,9 @@ class EmployeeController extends Controller
             ->cover(600, 600)
             ->toWebp(80);
 
-        Storage::disk('public')->put($path, (string) $encoded);
+        // Usamos el disco por defecto
+        $disk = config('filesystems.default');
+        Storage::disk($disk)->put($path, (string) $encoded);
 
         return $path;
     }
