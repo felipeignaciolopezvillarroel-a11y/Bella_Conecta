@@ -32,8 +32,23 @@ class Product extends Model
         parent::boot();
 
         static::saving(function ($model) {
-            $model->name = mb_convert_case(trim($model->name), MB_CASE_TITLE, "UTF-8");
-            $model->slug = Str::slug($model->name);
+            $model->name = mb_convert_case(trim((string) $model->name), MB_CASE_TITLE, 'UTF-8');
+
+            $baseSlug = Str::slug($model->name) ?: 'producto';
+            $slug = $baseSlug;
+            $counter = 2;
+
+            while (
+                static::query()
+                ->where('slug', $slug)
+                ->when($model->exists, fn($q) => $q->where('id', '!=', $model->id))
+                ->exists()
+            ) {
+                $slug = $baseSlug . '-' . $counter;
+                $counter++;
+            }
+
+            $model->slug = $slug;
         });
     }
 
