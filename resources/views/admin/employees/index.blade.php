@@ -94,7 +94,7 @@
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-sm font-bold text-pink-600 overflow-hidden shrink-0">
                                     @if($employee->photo)
-                                    <img src="{{ asset('storage/' . $employee->photo) }}" alt="{{ $employee->name }}" class="w-full h-full object-cover">
+                                    <img src="{{ $employee->photo_url }}" alt="{{ $employee->name }}" class="w-full h-full object-cover">
                                     @else
                                     {{ strtoupper(substr($employee->name, 0, 1)) }}
                                     @endif
