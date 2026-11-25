@@ -55,6 +55,12 @@ class ProductController extends Controller
             'image_file.max' => 'La imagen no debe superar los 5MB.',
         ]);
 
+        if ($this->hasDuplicateProduct($data['name'], $data['brand'] ?? null)) {
+            return back()
+                ->withInput()
+                ->with('error', 'Ya existe un producto registrado con ese mismo nombre y marca.');
+        }
+
         if ($request->hasFile('image_file')) {
             $data['image'] = $this->storeWebp($request->file('image_file'));
         }
@@ -100,6 +106,12 @@ class ProductController extends Controller
             'image_file.max' => 'La imagen no debe superar los 5MB.',
         ]);
 
+        if ($this->hasDuplicateProduct($data['name'], $data['brand'] ?? null, $product->id)) {
+            return back()
+                ->withInput()
+                ->with('error', 'Ya existe otro producto con ese mismo nombre y marca.');
+        }
+
         if ($request->hasFile('image_file')) {
             // Eliminar la imagen anterior si existe en el bucket y no es URL externa
             if ($product->image && !Str::startsWith($product->image, ['http://', 'https://', '/storage/']) && Storage::disk('s3')->exists($product->image)) {
@@ -125,6 +137,23 @@ class ProductController extends Controller
         $product->delete();
         return redirect()->route('admin.products.index')
             ->with('success', 'Producto eliminado correctamente.');
+    }
+
+    // Verifica si ya existe un producto con el mismo nombre y marca (sin distinguir mayúsculas/espacios)
+    private function hasDuplicateProduct(string $name, ?string $brand, ?int $ignoreId = null): bool
+    {
+        $normalizedName = mb_strtolower(trim($name), 'UTF-8');
+        $normalizedBrand = $brand !== null ? mb_strtolower(trim($brand), 'UTF-8') : null;
+
+        return Product::query()
+            ->when($ignoreId !== null, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->whereRaw('LOWER(TRIM(name)) = ?', [$normalizedName])
+            ->when(
+                $normalizedBrand !== null && $normalizedBrand !== '',
+                fn ($q) => $q->whereRaw('LOWER(TRIM(brand)) = ?', [$normalizedBrand]),
+                fn ($q) => $q->where(fn ($sub) => $sub->whereNull('brand')->orWhereRaw("TRIM(brand) = ''"))
+            )
+            ->exists();
     }
 
     // Método privado para convertir y guardar la imagen como WebP en el bucket (Supabase vía S3)
