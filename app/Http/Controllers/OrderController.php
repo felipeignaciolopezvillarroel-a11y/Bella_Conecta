@@ -63,28 +63,24 @@ class OrderController extends Controller
                 ];
             }
 
-            $order = DB::transaction(function () use ($total, $itemsToInsert) {
-                $order = Order::create([
-                    'user_id'        => auth()->id(),
-                    'customer_name'  => auth()->user()->name,
-                    'customer_email' => auth()->user()->email,
-                    'customer_phone' => auth()->user()->phone ?? null,
-                    'total'          => $total,
-                    'status'         => 'pending',
-                ]);
+            $order = Order::create([
+                'user_id'        => auth()->id(),
+                'customer_name'  => auth()->user()->name,
+                'customer_email' => auth()->user()->email,
+                'customer_phone' => auth()->user()->phone ?? null,
+                'total'          => $total,
+                'status'         => 'pending',
+            ]);
 
-                foreach ($itemsToInsert as $item) {
-                    $order->items()->create($item);
+            foreach ($itemsToInsert as $item) {
+                $order->items()->create($item);
 
-                    DB::table('products')
-                        ->where('id', $item['product_id'])
-                        ->update([
-                            'stock' => DB::raw('stock - ' . (int) $item['quantity']),
-                        ]);
-                }
-
-                return $order;
-            });
+                DB::table('products')
+                    ->where('id', $item['product_id'])
+                    ->update([
+                        'stock' => DB::raw('stock - ' . (int) $item['quantity']),
+                    ]);
+            }
 
             return redirect()->route('orders.show', $order->code)
                 ->with('success', '¡Boleta generada! Presenta este código al retirar tus productos.')
