@@ -570,6 +570,13 @@
                             Generando...
                         </span>
                     </button>
+                    {{-- Botón para cancelar/vaciar el carrito --}}
+                    <button type="button"
+                        @click="if (typeof clearCart === 'function') { clearCart(); } else { cart = []; localStorage.removeItem('cart'); } openCheckout = false;"
+                        :disabled="isSubmitting"
+                        class="cursor-pointer w-full mt-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 font-semibold py-2.5 rounded-xl transition text-sm">
+                        Cancelar carrito
+                    </button>
                     <p class="text-xs text-center text-gray-500 mt-3">Al generar la boleta, podrás ir a pagar y retirar a la tienda.</p>
                 </form>
             </div>

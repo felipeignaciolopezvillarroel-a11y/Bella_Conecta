@@ -24,6 +24,11 @@
 
     @include('partials.footer')
 
+    {{-- 💬 Asistente FAQ en el home --}}
+    @if (request()->routeIs('home') || request()->is('/'))
+        @include('partials.faq-chatbot')
+    @endif
+
     {{-- 🔔 Notificaciones flotantes --}}
     <x-toast />
 

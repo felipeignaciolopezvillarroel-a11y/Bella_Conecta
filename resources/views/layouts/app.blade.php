@@ -40,6 +40,9 @@
 
     </div>
 
+    {{-- Chatbot FAQ (solo en el home) --}}
+    @include('partials.faq-chatbot')
+
     {{-- Toasts --}}
     <x-toast />
 
