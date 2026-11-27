@@ -28,7 +28,7 @@
             {{-- Header --}}
             <div class="flex justify-between items-start border-b border-gray-200 pb-8 mb-8">
                 <div>
-                    <h1 class="text-3xl font-bold text-[#1F1B1A]">Bella Conecta</h1>
+                    <h1 class="text-3xl font-bold text-[#1F1B1A]">Bellas Conecta</h1>
                     <p class="text-sm text-gray-500 mt-1">Av. Principal 123, Santiago</p>
                 </div>
                 <div class="text-right">

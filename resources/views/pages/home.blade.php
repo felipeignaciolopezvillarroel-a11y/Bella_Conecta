@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', 'Bella Conecta — Estilistas & Belleza')
+@section('title', 'Bellas Conecta — Estilistas & Belleza')
 
 @section('content')
 
@@ -590,7 +590,7 @@
         <div class="flex flex-wrap items-center gap-y-12 lg:gap-y-0">
             <div class="w-full lg:w-5/12 px-4 lg:px-0">
                 <div class="relative flex flex-col min-w-0 break-words bg-white w-full shadow-2xl rounded-2xl overflow-hidden">
-                    <img alt="Interior del salón Bella Conecta" src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1000&q=80" class="w-full align-middle aspect-[4/3] object-cover">
+                    <img alt="Interior del salón Bellas Conecta" src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=1000&q=80" class="w-full align-middle aspect-[4/3] object-cover">
 
                     <div class="relative bg-gradient-to-br from-pink-500 to-fuchsia-600 p-8 pt-10 text-white">
                         <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 583 95" class="absolute left-0 w-full block h-14 -top-12 text-pink-500 fill-current">
@@ -598,7 +598,7 @@
                         </svg>
                         <h4 class="text-2xl font-bold mb-3">Más que un salón, una experiencia</h4>
                         <p class="text-sm font-light text-white/95 leading-relaxed">
-                            En Bella Conecta creemos que cada persona es única. Te escuchamos, asesoramos y creamos un look que te represente, con productos de alta calidad y técnicas actualizadas.
+                            En Bellas Conecta creemos que cada persona es única. Te escuchamos, asesoramos y creamos un look que te represente, con productos de alta calidad y técnicas actualizadas.
                         </p>
                     </div>
                 </div>
@@ -657,7 +657,7 @@
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10 sm:mb-14">
             <div>
                 <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1F1B1A] mb-2">Lo que dicen nuestras clientas</h2>
-                <p class="text-gray-600 max-w-xl text-sm sm:text-base">Miles de personas confían en Bella Conecta. Estas son algunas de sus historias.</p>
+                <p class="text-gray-600 max-w-xl text-sm sm:text-base">Miles de personas confían en Bellas Conecta. Estas son algunas de sus historias.</p>
             </div>
 
             <div class="flex items-center gap-4 bg-[#FDF8F5] border border-[#EEE3DD] rounded-2xl px-5 py-3 self-start sm:self-auto shrink-0">
@@ -710,7 +710,7 @@
                 </h2>
 
                 <p class="text-gray-600 text-base sm:text-lg leading-relaxed mb-8">
-                    Tu opinión nos ayuda a mejorar y a que otras personas conozcan Bella Conecta. Cuéntanos cómo fue tu visita, qué te gustó y qué podríamos hacer aún mejor.
+                    Tu opinión nos ayuda a mejorar y a que otras personas conozcan Bellas Conecta. Cuéntanos cómo fue tu visita, qué te gustó y qué podríamos hacer aún mejor.
                 </p>
 
                 <ul class="space-y-4 text-gray-700">
@@ -810,7 +810,7 @@
 <section id="reservar" class="py-16 sm:py-20 bg-gradient-to-br from-pink-500 to-fuchsia-600 text-white">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 text-center">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">¿Lista para tu transformación?</h2>
-        <p class="text-white/90 mb-8 text-base sm:text-lg">Reserva tu cita ahora y vive la experiencia Bella Conecta.</p>
+        <p class="text-white/90 mb-8 text-base sm:text-lg">Reserva tu cita ahora y vive la experiencia Bellas Conecta.</p>
         <a href="{{ route('bookings.pick') }}" class="inline-block bg-white text-pink-600 font-semibold px-8 py-3.5 rounded-full hover:bg-pink-50 transition shadow-lg">
             Reservar mi cita
         </a>

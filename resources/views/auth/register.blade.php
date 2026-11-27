@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-6 text-center">
         <h2 class="text-2xl font-bold text-[#1F1B1A]">Crear cuenta</h2>
-        <p class="text-sm text-gray-600 mt-1">Únete a Bella Conecta</p>
+        <p class="text-sm text-gray-600 mt-1">Únete a Bellas Conecta</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-5">

@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-8 text-center">
         <h2 class="text-2xl sm:text-3xl font-bold text-[#1F1B1A]">Iniciar sesión</h2>
-        <p class="text-sm text-gray-600 mt-2">Accede a tu cuenta de Bella Conecta</p>
+        <p class="text-sm text-gray-600 mt-2">Accede a tu cuenta de Bellas Conecta</p>
     </div>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />

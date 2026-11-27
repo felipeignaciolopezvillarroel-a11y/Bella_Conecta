@@ -35,7 +35,7 @@
                 </svg>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-bold text-[#1F1B1A] truncate">Bella Conecta</p>
+                <p class="text-sm font-bold text-[#1F1B1A] truncate">Bellas Conecta</p>
                 <p class="text-[11px] text-gray-500 truncate">Santiago, Chile</p>
             </div>
         </div>

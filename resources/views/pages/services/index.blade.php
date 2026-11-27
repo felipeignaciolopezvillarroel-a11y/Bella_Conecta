@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', 'Servicios — Bella Conecta')
+@section('title', 'Servicios — Bellas Conecta')
 
 @section('content')
 <section class="relative py-8 sm:py-12 lg:py-16 bg-[#FDF8F5] min-h-screen overflow-hidden">

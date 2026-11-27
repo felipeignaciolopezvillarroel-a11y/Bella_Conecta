@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', 'Mi cuenta — Bella Conecta')
+@section('title', 'Mi cuenta — Bellas Conecta')
 
 @section('content')
 <section class="py-12 sm:py-16 bg-[#FDF8F5] min-h-screen">

@@ -4,7 +4,7 @@
     {{-- Logo --}}
     <div class="px-6 py-5 border-b border-[#EEE3DD]">
         <a href="{{ route('portal.dashboard') }}" class="flex flex-col leading-tight">
-            <span class="text-lg font-bold text-[#1F1B1A]">Bella Conecta</span>
+            <span class="text-lg font-bold text-[#1F1B1A]">Bellas Conecta</span>
             <span class="text-xs text-pink-600 font-semibold uppercase tracking-widest">Portal</span>
         </a>
     </div>

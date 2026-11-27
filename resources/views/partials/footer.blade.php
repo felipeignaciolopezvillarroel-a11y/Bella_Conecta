@@ -26,6 +26,6 @@
         </div>
     </div>
     <div class="border-t border-white/10 mt-10 sm:mt-12 pt-6 text-center text-xs text-gray-500 px-4">
-        © {{ date('Y') }} Bella Conecta. Todos los derechos reservados.
+        © {{ date('Y') }} Bellas Conecta. Todos los derechos reservados.
     </div>
 </footer>

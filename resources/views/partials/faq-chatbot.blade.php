@@ -105,7 +105,7 @@
         {{-- Cabecera fija --}}
         <div id="faq-header">
             <div style="min-width: 0;">
-                <div style="font-size: 14px; font-weight: 600;">Asistente Bella Conecta</div>
+                <div style="font-size: 14px; font-weight: 600;">Asistente Bellas Conecta</div>
                 <div style="font-size: 11px; color: #D1D5DB;">Guía rápida de servicios, productos y reservas</div>
             </div>
             <button type="button"
@@ -334,7 +334,7 @@
                 messages: [{
                     id: 1,
                     from: 'bot',
-                    text: '¡Hola! Soy el asistente de Bella Conecta. Pregúntame sobre reservas, servicios, productos o retiro con boleta.',
+                    text: '¡Hola! Soy el asistente de Bellas Conecta. Pregúntame sobre reservas, servicios, productos o retiro con boleta.',
                     url: null,
                     linkLabel: null
                 }],
