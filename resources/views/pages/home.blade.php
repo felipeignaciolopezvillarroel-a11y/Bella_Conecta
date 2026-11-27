@@ -652,49 +652,79 @@
 </section>
 
 {{-- RESEÑAS --}}
+{{-- RESEÑAS --}}
 <section id="reseñas" class="py-16 sm:py-20 bg-white">
     <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12">
+        
+        @php
+            // Traemos TODAS las aprobadas para calcular el promedio y total reales
+            $allReviews = \App\Models\Review::where('approved', true)->get();
+            $averageRating = $allReviews->avg('rating') ?? 5;
+            $totalReviews = $allReviews->count();
+
+            // Para mostrar, ordenamos por puntaje (descendente) y luego por fecha
+            $reviews = $allReviews->sortByDesc(function ($review) {
+                return [$review->rating, $review->created_at];
+            })->take(6);
+        @endphp
+
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-10 sm:mb-14">
             <div>
-                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1F1B1A] mb-2">Lo que dicen nuestras clientas</h2>
-                <p class="text-gray-600 max-w-xl text-sm sm:text-base">Miles de personas confían en Bellas Conecta. Estas son algunas de sus historias.</p>
+                <div class="inline-flex items-center gap-2 bg-pink-100 border border-pink-200 text-pink-600 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full mb-4">
+                    <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
+                    Testimonios reales
+                </div>
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#1F1B1A] mb-2">
+                    Lo que dicen nuestras clientas
+                </h2>
+                <p class="text-gray-600 max-w-xl text-sm sm:text-base">
+                    Miles de personas confían en Bella Conecta. Estas son algunas de sus historias.
+                </p>
             </div>
 
-            <div class="flex items-center gap-4 bg-[#FDF8F5] border border-[#EEE3DD] rounded-2xl px-5 py-3 self-start sm:self-auto shrink-0">
+            {{-- Rating general mejorado --}}
+            <div class="flex items-center gap-5 bg-gradient-to-br from-[#FDF8F5] to-pink-50 border border-[#EEE3DD] rounded-2xl px-6 py-4 self-start sm:self-auto shrink-0 shadow-sm">
                 <div class="text-center">
-                    <p class="text-3xl font-bold text-[#1F1B1A] leading-none">4.9</p>
-                    <div class="flex items-center gap-0.5 mt-1">
-                        @for ($i = 0; $i < 5; $i++)
-                            <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    <p class="text-4xl font-bold text-[#1F1B1A] leading-none">{{ number_format($averageRating, 1) }}</p>
+                    <div class="flex items-center justify-center gap-0.5 mt-1.5">
+                        @for ($i = 1; $i <= 5; $i++)
+                            <svg class="w-4 h-4 {{ $i <= round($averageRating) ? 'text-yellow-400' : 'text-gray-300' }}" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                             </svg>
-                            @endfor
+                        @endfor
                     </div>
                 </div>
-                <div class="border-l border-[#EEE3DD] pl-4">
+                <div class="border-l border-[#EEE3DD] pl-5">
                     <p class="text-xs text-gray-500">Basado en</p>
-                    <p class="text-sm font-semibold text-[#1F1B1A]">+250 reseñas</p>
+                    <p class="text-sm font-semibold text-[#1F1B1A]">{{ $totalReviews }} {{ $totalReviews == 1 ? 'reseña' : 'reseñas' }}</p>
                 </div>
             </div>
         </div>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @php
-            $resenas = [
-            ['María José', 'Increíble atención. Salí sintiéndome renovada, el equipo es muy profesional y se nota que aman lo que hacen.', 5, 'Cliente frecuente', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80', 'Hace 2 semanas'],
-            ['Carolina Rojas', 'El balayage que me hicieron fue espectacular. ¡100% recomendado! Me entendieron perfecto el estilo que buscaba.', 5, 'Primera visita', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80', 'Hace 1 mes'],
-            ['Fernanda López', 'Ambiente acogedor y precios justos. Ya tengo mi estilista de confianza y no pienso cambiarla.', 4, 'Cliente recurrente', 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80', 'Hace 3 semanas'],
-            ];
-            @endphp
-
-            @foreach ($resenas as $r)
-            <x-review-card :name="$r[0]" :review="$r[1]" :rating="$r[2]" :role="$r[3]" :image="$r[4]" :date="$r[5]" />
-            @endforeach
+            @forelse($reviews as $review)
+                <x-review-card 
+                    :name="$review->name"
+                    :review="$review->review"
+                    :rating="$review->rating"
+                    :role="$review->service ? \Illuminate\Support\Str::title(str_replace('-', ' ', $review->service)) : 'Cliente'"
+                    :image="null"
+                    :date="$review->created_at->diffForHumans()"
+                />
+            @empty
+                <div class="col-span-full py-16 bg-[#FDF8F5] border-2 border-dashed border-[#EEE3DD] rounded-3xl flex flex-col items-center justify-center text-center px-4">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                        <span class="text-3xl">💬</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#1F1B1A] mb-1">Aún no hay reseñas</h3>
+                    <p class="text-sm text-gray-500">Sé la primera en contarnos tu experiencia.</p>
+                </div>
+            @endforelse
         </div>
     </div>
 </section>
 
-{{-- DEJAR RESEÑA (sin cambios) --}}
+{{-- DEJAR RESEÑA --}}
 <section id="resenas-form" class="py-16 sm:py-20 bg-[#FDF8F5]">
     <div class="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12">
         <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
@@ -710,7 +740,7 @@
                 </h2>
 
                 <p class="text-gray-600 text-base sm:text-lg leading-relaxed mb-8">
-                    Tu opinión nos ayuda a mejorar y a que otras personas conozcan Bellas Conecta. Cuéntanos cómo fue tu visita, qué te gustó y qué podríamos hacer aún mejor.
+                    Tu opinión nos ayuda a mejorar y a que otras personas conozcan Bella Conecta. Cuéntanos cómo fue tu visita, qué te gustó y qué podríamos hacer aún mejor.
                 </p>
 
                 <ul class="space-y-4 text-gray-700">
@@ -742,7 +772,8 @@
                 <div class="absolute -inset-4 bg-gradient-to-r from-pink-300 to-fuchsia-300 rounded-[2rem] blur-2xl opacity-30"></div>
 
                 <div class="relative bg-white rounded-3xl shadow-2xl border border-pink-100 p-6 sm:p-8">
-                    <form action="#" method="POST" class="space-y-5">
+
+                    <form action="{{ route('reviews.store') }}" method="POST" class="space-y-5">
                         @csrf
 
                         <div x-data="{ rating: 0, hovered: 0 }">
@@ -777,12 +808,9 @@
                             </label>
                             <select id="service" name="service" class="w-full px-4 py-3 rounded-xl border border-[#EEE3DD] focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none transition text-sm bg-white">
                                 <option value="">Selecciona un servicio</option>
-                                <option value="corte">Corte de cabello</option>
-                                <option value="coloracion">Coloración</option>
-                                <option value="manicure">Manicure & Pedicure</option>
-                                <option value="tratamiento">Tratamiento capilar</option>
-                                <option value="maquillaje">Maquillaje</option>
-                                <option value="novia">Peinado de novia</option>
+                                @foreach(\App\Models\Service::where('active', true)->get() as $service)
+                                    <option value="{{ $service->slug }}">{{ $service->name }}</option>
+                                @endforeach
                             </select>
                         </div>
 
@@ -791,7 +819,7 @@
                             <textarea id="review" name="review" rows="4" required maxlength="500" placeholder="Cuéntanos cómo fue tu experiencia, qué te gustó más, etc." class="w-full px-4 py-3 rounded-xl border border-[#EEE3DD] focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none transition text-sm resize-none"></textarea>
                         </div>
 
-                        <button type="submit" class="w-full bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-700 hover:to-fuchsia-700 text-white font-semibold py-3.5 rounded-full transition shadow-lg hover:shadow-pink-500/50 inline-flex items-center justify-center gap-2">
+                        <button type="submit" class="cursor-pointer w-full bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:from-pink-700 hover:to-fuchsia-700 text-white font-semibold py-3.5 rounded-full transition shadow-lg hover:shadow-pink-500/50 inline-flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                             </svg>

@@ -6,12 +6,16 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 // Home
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Ordenes
+// Reseñas (pública)
+Route::post('/resenas', [ReviewController::class, 'store'])->name('reviews.store');
+
+// Órdenes
 Route::middleware('auth')->group(function () {
     Route::get('/boleta/{order:code}', [OrderController::class, 'show'])->name('orders.show');
     Route::post('/checkout', [OrderController::class, 'store'])->name('orders.store');
@@ -35,9 +39,7 @@ Route::get('/equipo', function () {
 
 // Productos (público)
 Route::get('/productos', function () {
-    // Cambiamos el array estático por los productos reales de la BD
     $products = \App\Models\Product::where('active', true)->orderBy('name')->get();
-    
     return view('pages.store.index', compact('products'));
 })->name('products.index');
 
@@ -47,15 +49,12 @@ Route::get('/reservar', function (\Illuminate\Http\Request $request) {
     $employee = null;
 
     if ($employeeUuid) {
-        // Buscamos al empleado por su UUID
         $employee = \App\Models\Employee::where('uuid', $employeeUuid)->first();
     }
 
     if ($employee) {
-        // Si hay un empleado seleccionado, solo mostramos SUS servicios
         $services = $employee->services()->where('active', true)->orderBy('name')->get();
     } else {
-        // Si no, mostramos todos los servicios activos
         $services = \App\Models\Service::where('active', true)->orderBy('name')->get();
     }
 
@@ -91,19 +90,28 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
     // Servicios
     Route::resource('services', \App\Http\Controllers\Admin\ServiceController::class);
+
     // Empleados
     Route::resource('employees', \App\Http\Controllers\Admin\EmployeeController::class);
+
     // Productos
     Route::resource('products', \App\Http\Controllers\Admin\ProductController::class);
+
     // Reservas
     Route::get('bookings', [\App\Http\Controllers\Admin\BookingController::class, 'index'])->name('bookings.index');
     Route::patch('bookings/{booking}/status', [\App\Http\Controllers\Admin\BookingController::class, 'updateStatus'])->name('bookings.updateStatus');
     Route::delete('bookings/{booking}', [\App\Http\Controllers\Admin\BookingController::class, 'destroy'])->name('bookings.destroy');
+
     // Usuarios
-    Route::resource('users', UserController::class)
-        ->only(['index', 'show', 'destroy']);
+    Route::resource('users', UserController::class)->only(['index', 'show', 'destroy']);
+
+    // Reseñas
+    Route::get('reviews', [\App\Http\Controllers\Admin\ReviewController::class, 'index'])->name('reviews.index');
+    Route::patch('reviews/{review}/approve', [\App\Http\Controllers\Admin\ReviewController::class, 'approve'])->name('reviews.approve');
+    Route::delete('reviews/{review}', [\App\Http\Controllers\Admin\ReviewController::class, 'destroy'])->name('reviews.destroy');
 });
 
 // Portal del empleado
