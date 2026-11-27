@@ -15,6 +15,8 @@ class Booking extends Model
         'start_time',
         'end_time',
         'status',
+        'modality',
+        'address',
         'notes',
         'code',
     ];
@@ -29,17 +31,27 @@ class Booking extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
     }
-    public function employee()
+
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
     public static function generateCode(): string
     {
-        return 'BC-' . now()->format('Y') . '-' . str_pad((string) (static::count() + 1), 5, '0', STR_PAD_LEFT);
+        $year = now()->format('Y');
+        $nextNumber = (static::max('id') ?? 0) + 1;
+
+        do {
+            $code = 'BC-' . $year . '-' . str_pad((string) $nextNumber, 5, '0', STR_PAD_LEFT);
+            $nextNumber++;
+        } while (static::where('code', $code)->exists());
+
+        return $code;
     }
 }

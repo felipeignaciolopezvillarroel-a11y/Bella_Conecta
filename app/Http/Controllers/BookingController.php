@@ -123,21 +123,98 @@ class BookingController extends Controller
 
     public function store(Request $request, Service $service)
     {
+        $regionsWithCommunes = [
+            'Región de Valparaíso' => [
+                'Valparaíso',
+                'Viña del Mar',
+                'Concón',
+                'Quilpué',
+                'Villa Alemana',
+                'Quillota',
+                'La Calera',
+                'La Cruz',
+                'Nogales',
+                'Hijuelas',
+                'Limache',
+                'Olmué',
+                'San Antonio',
+                'Cartagena',
+                'El Quisco',
+                'El Tabo',
+                'Algarrobo',
+                'Santo Domingo',
+                'Los Andes',
+                'San Felipe',
+                'Calle Larga',
+                'Rinconada',
+                'Casablanca',
+                'Petorca',
+                'La Ligua',
+            ],
+            'Región Metropolitana de Santiago' => [
+                'Santiago',
+                'Providencia',
+                'Las Condes',
+                'Ñuñoa',
+                'La Reina',
+                'Vitacura',
+                'Maipú',
+                'La Florida',
+                'Puente Alto',
+                'San Miguel',
+            ],
+            'Región de Coquimbo' => [
+                'La Serena',
+                'Coquimbo',
+                'Ovalle',
+                'Illapel',
+                'Vicuña',
+            ],
+            'Región del Biobío' => [
+                'Concepción',
+                'Talcahuano',
+                'San Pedro de la Paz',
+                'Chiguayante',
+                'Los Ángeles',
+            ],
+        ];
+
         $data = $request->validate([
-            'date'        => 'required|date|after_or_equal:today',
-            'start_time'  => 'required|date_format:H:i',
-            // Ahora es requerido
-            'employee_id' => 'required|exists:employees,id,category,profesional',
-            'notes'       => 'nullable|string|max:500',
+            'date'           => 'required|date|after_or_equal:today',
+            'start_time'     => 'required|date_format:H:i',
+            'employee_id'    => 'required|exists:employees,id,category,profesional',
+            'modality'       => 'required|in:salon,home',
+            'province'       => ['required_if:modality,home', 'nullable', 'string', 'max:100', \Illuminate\Validation\Rule::in(array_keys($regionsWithCommunes))],
+            'commune'        => ['required_if:modality,home', 'nullable', 'string', 'max:100'],
+            'street_address' => ['required_if:modality,home', 'nullable', 'string', 'max:255'],
+            'notes'          => ['nullable', 'string', 'max:500'],
         ], [
-            'employee_id.required' => 'Debes seleccionar un estilista.',
-            'employee_id.exists'   => 'El estilista seleccionado no es válido.',
+            'employee_id.required'       => 'Debes seleccionar un estilista.',
+            'employee_id.exists'         => 'El estilista seleccionado no es válido.',
+            'modality.required'          => 'Debes elegir si el servicio es en peluquería o a domicilio.',
+            'modality.in'                => 'La modalidad seleccionada no es válida.',
+            'province.required_if'       => 'Debes seleccionar la región para el servicio a domicilio.',
+            'province.in'                => 'La región seleccionada no es válida.',
+            'commune.required_if'        => 'Debes seleccionar la comuna para el servicio a domicilio.',
+            'street_address.required_if' => 'Debes ingresar la dirección para el servicio a domicilio.',
         ]);
+
+        if ($data['modality'] === 'home') {
+            $allowedCommunes = $regionsWithCommunes[$data['province']] ?? [];
+
+            if (! in_array($data['commune'], $allowedCommunes, true)) {
+                throw ValidationException::withMessages([
+                    'commune' => 'La comuna seleccionada no pertenece a la región elegida.',
+                ]);
+            }
+        }
 
         $date       = Carbon::parse($data['date']);
         $startTime  = Carbon::parse($date->toDateString() . ' ' . $data['start_time']);
         $endTime    = $startTime->copy()->addMinutes($service->duration_minutes);
-        $employeeId = $data['employee_id'];
+        $employeeId = (int) $data['employee_id'];
+        $startStr   = $startTime->format('H:i:s');
+        $endStr     = $endTime->format('H:i:s');
 
         // Verificar que el empleado esté activo Y realice este servicio
         $isActivePro = Employee::where('id', $employeeId)
@@ -167,70 +244,70 @@ class BookingController extends Controller
             ]);
         }
 
-        // Evitar reserva duplicada el mismo día
-        // $alreadyOnDay = Booking::where('user_id', auth()->id())
-        //     ->whereDate('date', $date->toDateString())
-        //     ->whereIn('status', ['pending', 'confirmed'])
-        //     ->exists();
+        // Verificar choque de horario antes de insertar
+        $existingBookings = Booking::whereDate('date', $date->toDateString())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('employee_id', $employeeId)
+            ->get(['start_time', 'end_time']);
 
-        // if ($alreadyOnDay) {
-        //     throw ValidationException::withMessages([
-        //         'date' => 'Ya tienes una reserva ese día. Cancélala o elige otra fecha.',
-        //     ]);
-        // }
+        $hasConflict = $existingBookings->contains(function ($b) use ($startStr, $endStr) {
+            $bStart = Carbon::parse($b->start_time)->format('H:i:s');
+            $bEnd   = Carbon::parse($b->end_time)->format('H:i:s');
+            return $startStr < $bEnd && $endStr > $bStart;
+        });
+
+        if ($hasConflict) {
+            return back()->withErrors([
+                'start_time' => 'Ese horario ya está reservado. Elige otro.',
+            ])->withInput();
+        }
+
+        $fullAddress = null;
+        if ($data['modality'] === 'home') {
+            $fullAddress = trim($data['street_address'])
+                . ', ' . trim($data['commune'])
+                . ', ' . trim($data['province']);
+        }
+
+        $bookingCode = Booking::generateCode();
 
         try {
-            $booking = DB::transaction(function () use ($data, $date, $startTime, $endTime, $employeeId, $service) {
-
-                // Bloquea filas del mismo día para ese estilista
-                $query = Booking::whereDate('date', $date->toDateString())
-                    ->whereIn('status', ['pending', 'confirmed'])
-                    ->where('employee_id', $employeeId)
-                    ->lockForUpdate();
-
-                $startStr = $startTime->format('H:i:s');
-                $endStr   = $endTime->format('H:i:s');
-
-                $conflicts = $query->get()->filter(function ($b) use ($startStr, $endStr) {
-                    $bStart = Carbon::parse($b->start_time)->format('H:i:s');
-                    $bEnd   = Carbon::parse($b->end_time)->format('H:i:s');
-                    return $startStr < $bEnd && $endStr > $bStart;
-                });
-
-                if ($conflicts->isNotEmpty()) {
-                    throw ValidationException::withMessages([
-                        'start_time' => 'Ese horario ya está reservado. Elige otro.',
-                    ]);
-                }
-
-                return Booking::create([
-                    'user_id'     => auth()->id(),
-                    'service_id'  => $service->id,
-                    'employee_id' => $employeeId,
-                    'date'        => $date->toDateString(),
-                    'start_time'  => $startStr,
-                    'end_time'    => $endStr,
-                    'status'      => 'confirmed',
-                    'notes'       => $data['notes'] ?? null,
-                    'code'        => Booking::generateCode(),
-                ]);
-            });
-        } catch (ValidationException $e) {
-            return back()->withErrors($e->errors())->withInput();
+            $booking = Booking::create([
+                'user_id'     => auth()->id(),
+                'service_id'  => $service->id,
+                'employee_id' => $employeeId,
+                'date'        => $date->toDateString(),
+                'start_time'  => $startStr,
+                'end_time'    => $endStr,
+                'status'      => 'confirmed',
+                'modality'    => $data['modality'],
+                'address'     => $fullAddress,
+                'notes'       => $data['notes'] ?? null,
+                'code'        => $bookingCode,
+            ]);
         } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
             return back()->withErrors([
                 'start_time' => 'Ese horario acaba de ser tomado por otra persona. Elige otro.',
             ])->withInput();
         } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Error SQL al crear reserva', [
+                'sql'      => $e->getSql(),
+                'bindings' => $e->getBindings(),
+                'message'  => $e->getMessage(),
+                'previous' => $e->getPrevious()?->getMessage(),
+            ]);
+
             if (
                 str_contains($e->getMessage(), 'UNIQUE constraint failed') ||
-                str_contains($e->getMessage(), 'unique_active_slot')
+                str_contains($e->getMessage(), 'unique_active_slot') ||
+                $e->getCode() === '23505'
             ) {
                 return back()->withErrors([
                     'start_time' => 'Ese horario acaba de ser tomado. Elige otro.',
                 ])->withInput();
             }
-            throw $e;
+
+            return back()->with('error', 'No se pudo completar la reserva: ' . ($e->getPrevious()?->getMessage() ?? $e->getMessage()))->withInput();
         }
 
         return redirect()

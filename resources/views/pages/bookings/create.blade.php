@@ -132,7 +132,7 @@
 
                         <div class="grid md:grid-cols-2 gap-5 mb-5">
 
-                                                        {{-- ══════════ ESTILISTA ══════════ --}}
+                            {{-- ══════════ ESTILISTA ══════════ --}}
                             <div>
                                 <label class="block text-sm font-semibold text-[#1F1B1A] mb-2">
                                     Estilista <span class="text-pink-600">*</span>
@@ -323,6 +323,141 @@
                                             x-text="slot.label"></div>
                                     </label>
                                 </template>
+                            </div>
+                        </div>
+
+                        {{-- ══════════ MODALIDAD: PELUQUERÍA O A DOMICILIO ══════════ --}}
+                        <div class="mb-6"
+                            x-data="{
+                                modality: '{{ old('modality', 'salon') }}',
+                                province: '{{ old('province', '') }}',
+                                commune: '{{ old('commune', '') }}',
+                                street: '{{ old('street_address', '') }}',
+                                regionsWithCommunes: {
+                                    'Región de Valparaíso': [
+                                        'Valparaíso', 'Viña del Mar', 'Concón', 'Quilpué', 'Villa Alemana',
+                                        'Quillota', 'La Calera', 'La Cruz', 'Nogales', 'Hijuelas',
+                                        'Limache', 'Olmué', 'San Antonio', 'Cartagena', 'El Quisco',
+                                        'El Tabo', 'Algarrobo', 'Santo Domingo', 'Los Andes', 'San Felipe',
+                                        'Calle Larga', 'Rinconada', 'Casablanca', 'Petorca', 'La Ligua'
+                                    ],
+                                    'Región Metropolitana de Santiago': [
+                                        'Santiago', 'Providencia', 'Las Condes', 'Ñuñoa', 'La Reina',
+                                        'Vitacura', 'Maipú', 'La Florida', 'Puente Alto', 'San Miguel'
+                                    ],
+                                    'Región de Coquimbo': [
+                                        'La Serena', 'Coquimbo', 'Ovalle', 'Illapel', 'Vicuña'
+                                    ],
+                                    'Región del Biobío': [
+                                        'Concepción', 'Talcahuano', 'San Pedro de la Paz', 'Chiguayante', 'Los Ángeles'
+                                    ]
+                                },
+                                get availableCommunes() {
+                                    if (!this.province) return [];
+                                    return this.regionsWithCommunes[this.province] || [];
+                                },
+                                onRegionChange() {
+                                    if (!this.availableCommunes.includes(this.commune)) {
+                                        this.commune = '';
+                                    }
+                                }
+                            }">
+                            <label class="block text-sm font-semibold text-[#1F1B1A] mb-2">
+                                ¿Dónde prefieres el servicio? <span class="text-pink-600">*</span>
+                            </label>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="modality" value="salon" x-model="modality" class="peer sr-only" required>
+                                    <div class="flex items-center gap-3 p-3.5 rounded-xl border-2 transition"
+                                        :class="modality === 'salon'
+                                            ? 'border-pink-500 bg-pink-50/70 text-[#1F1B1A]'
+                                            : 'border-[#EEE3DD] bg-white text-gray-600 hover:border-pink-300'">
+                                        <span class="text-xl">💈</span>
+                                        <div>
+                                            <p class="text-sm font-semibold">En la peluquería</p>
+                                            <p class="text-xs text-gray-500">Atención en el salón</p>
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="modality" value="home" x-model="modality" class="peer sr-only" required>
+                                    <div class="flex items-center gap-3 p-3.5 rounded-xl border-2 transition"
+                                        :class="modality === 'home'
+                                            ? 'border-pink-500 bg-pink-50/70 text-[#1F1B1A]'
+                                            : 'border-[#EEE3DD] bg-white text-gray-600 hover:border-pink-300'">
+                                        <span class="text-xl">🏠</span>
+                                        <div>
+                                            <p class="text-sm font-semibold">A domicilio</p>
+                                            <p class="text-xs text-gray-500">El profesional va a tu dirección</p>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {{-- Región, Comuna y Dirección si elige A domicilio --}}
+                            <div x-show="modality === 'home'" x-transition class="mt-4 space-y-4 bg-pink-50/40 border border-pink-100 rounded-2xl p-4" style="display: none;">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="province" class="block text-sm font-semibold text-[#1F1B1A] mb-1.5">
+                                            Región <span class="text-pink-600">*</span>
+                                        </label>
+                                        <select id="province"
+                                            name="province"
+                                            x-model="province"
+                                            @change="onRegionChange()"
+                                            :required="modality === 'home'"
+                                            class="w-full px-3.5 py-2.5 rounded-xl border border-[#EEE3DD] bg-white focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none text-sm text-[#1F1B1A]">
+                                            <option value="">Selecciona una región</option>
+                                            <template x-for="region in Object.keys(regionsWithCommunes)" :key="region">
+                                                <option :value="region" x-text="region"></option>
+                                            </template>
+                                        </select>
+                                        @error('province')
+                                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div>
+                                        <label for="commune" class="block text-sm font-semibold text-[#1F1B1A] mb-1.5">
+                                            Comuna <span class="text-pink-600">*</span>
+                                        </label>
+                                        <select id="commune"
+                                            name="commune"
+                                            x-model="commune"
+                                            :disabled="!province"
+                                            :required="modality === 'home'"
+                                            class="w-full px-3.5 py-2.5 rounded-xl border border-[#EEE3DD] bg-white disabled:bg-gray-100 disabled:text-gray-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none text-sm text-[#1F1B1A]">
+                                            <option value="" x-text="province ? 'Selecciona una comuna' : 'Primero elige región'"></option>
+                                            <template x-for="com in availableCommunes" :key="com">
+                                                <option :value="com" x-text="com"></option>
+                                            </template>
+                                        </select>
+                                        @error('commune')
+                                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="street_address" class="block text-sm font-semibold text-[#1F1B1A] mb-1.5">
+                                        Dirección <span class="text-pink-600">*</span>
+                                    </label>
+                                    <input id="street_address"
+                                        type="text"
+                                        name="street_address"
+                                        x-model="street"
+                                        :required="modality === 'home'"
+                                        placeholder="Ej: Calle Los Aromos 123, depto 4B"
+                                        class="w-full px-4 py-2.5 rounded-xl border border-[#EEE3DD] bg-white focus:border-pink-400 focus:ring-2 focus:ring-pink-200 outline-none text-sm">
+                                    @error('street_address')
+                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                    @enderror
+                                    @error('address')
+                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 

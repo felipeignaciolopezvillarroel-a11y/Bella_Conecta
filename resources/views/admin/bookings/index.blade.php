@@ -91,6 +91,7 @@
                         <th class="px-6 py-4 font-semibold">Código</th>
                         <th class="px-6 py-4 font-semibold">Cliente</th>
                         <th class="px-6 py-4 font-semibold">Servicio</th>
+                        <th class="px-6 py-4 font-semibold">Lugar</th>
                         <th class="px-6 py-4 font-semibold">Fecha y Hora</th>
                         <th class="px-6 py-4 font-semibold">Estilista</th>
                         <th class="px-6 py-4 font-semibold">Estado</th>
@@ -109,6 +110,20 @@
                         </td>
                         <td class="px-6 py-4">
                             {{ $booking->service->icon ?? '' }} {{ $booking->service->name ?? 'Servicio eliminado' }}
+                        </td>
+                        <td class="px-6 py-4">
+                            @if($booking->modality === 'home')
+                            <span class="inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                🏠 A domicilio
+                            </span>
+                            <p class="text-xs text-gray-600 mt-1 max-w-[200px] truncate" title="{{ $booking->address }}">
+                                {{ $booking->address ?: 'Sin dirección' }}
+                            </p>
+                            @else
+                            <span class="inline-flex items-center gap-1 bg-pink-50 text-pink-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                💈 En peluquería
+                            </span>
+                            @endif
                         </td>
                         <td class="px-6 py-4">
                             <p class="font-medium">{{ \Carbon\Carbon::parse($booking->date)->format('d/m/Y') }}</p>
@@ -140,18 +155,18 @@
                             <div class="flex items-center justify-end gap-1">
                                 {{-- Menú de cambio de estado --}}
                                 <div x-data="{ 
-                                        open: false, 
-                                        top: 0, 
-                                        left: 0,
-                                        toggleMenu(event) {
-                                            this.open = !this.open;
-                                            if (this.open) {
-                                                const rect = event.currentTarget.getBoundingClientRect();
-                                                this.top = rect.bottom + 8;
-                                                this.left = rect.right - 125;
-                                            }
-                                        }
-                                     }"
+                            open: false, 
+                            top: 0, 
+                            left: 0,
+                            toggleMenu(event) {
+                                this.open = !this.open;
+                                if (this.open) {
+                                    const rect = event.currentTarget.getBoundingClientRect();
+                                    this.top = rect.bottom + 8;
+                                    this.left = rect.right - 125;
+                                }
+                            }
+                         }"
                                     x-init="window.addEventListener('scroll', () => { open = false; }, { passive: true });"
                                     class="relative">
 
@@ -190,8 +205,8 @@
                                     class="hidden"
                                     x-data
                                     x-on:confirmed-delete-booking.window="
-                                        if ($event.detail?.id === {{ $booking->id }}) $el.submit()
-                                    ">
+                            if ($event.detail?.id === {{ $booking->id }}) $el.submit()
+                        ">
                                     @csrf
                                     @method('DELETE')
                                 </form>
@@ -200,10 +215,10 @@
                                     type="button"
                                     x-data
                                     x-on:click="
-                                        document.getElementById('delete-booking-code').textContent = @js($booking->code);
-                                        document.getElementById('delete-booking-client').textContent = @js($booking->user->name ?? 'Cliente eliminado');
-                                        $dispatch('open-confirm-delete-booking', { id: {{ $booking->id }} });
-                                    "
+                            document.getElementById('delete-booking-code').textContent = @js($booking->code);
+                            document.getElementById('delete-booking-client').textContent = @js($booking->user->name ?? 'Cliente eliminado');
+                            $dispatch('open-confirm-delete-booking', { id: {{ $booking->id }} });
+                        "
                                     class="cursor-pointer p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                                     title="Eliminar reserva {{ $booking->code }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,7 +230,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-6 py-16 text-center">
+                        <td colspan="8" class="px-6 py-16 text-center">
                             @if(request()->anyFilled(['search', 'status', 'date']))
                             {{-- CASO 1: Filtros sin resultados --}}
                             <div class="flex flex-col items-center justify-center space-y-3">
