@@ -13,7 +13,7 @@
 
 <div {{ $attributes->merge(['class' => 'flex flex-col leading-tight']) }}>
     <span class="{{ $s['main'] }} font-light tracking-wide {{ $mainColor }}">
-        bella
+        bellas
         <span class="font-extrabold {{ $accent }} tracking-wider">CONECTA</span>
         <span class="{{ $accent }} {{ $s['heart'] }}">♡</span>
     </span>
